@@ -1,0 +1,27 @@
+# Binaries
+tally-mcp
+tally-mcp.exe
+*.o
+*.a
+*.so
+
+# Vendor
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+tally-mcp.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
