@@ -261,3 +261,196 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// TestGetLedgersIntegration tests the get_ledgers tool
+func TestGetLedgersIntegration(t *testing.T) {
+	host := os.Getenv("TALLY_HOST")
+	if host == "" {
+		t.Skip("TALLY_HOST not set")
+	}
+
+	log, _ := logger.New("warn", "")
+	port := getIntEnvOrDefault("TALLY_PORT", 9900)
+	company := os.Getenv("TALLY_COMPANY")
+	client := tally.NewClient(host, port, 30)
+	client.SetCompany(company)
+	handler := mcp.NewHandler(client, log)
+
+	result, err := handler.HandleToolCall("get_ledgers", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("get_ledgers failed: %v", err)
+	}
+
+	resultMap := result.(map[string]interface{})
+	if !resultMap["success"].(bool) {
+		t.Fatal("get_ledgers returned success=false")
+	}
+
+	ledgers := resultMap["ledgers"].([]tally.Ledger)
+	t.Logf("✓ get_ledgers returned %d ledgers", len(ledgers))
+	for i, ledger := range ledgers {
+		if i < 3 {
+			t.Logf("  Ledger %d: %s (Parent: %s)", i+1, ledger.Name, ledger.ParentGroup)
+		}
+	}
+}
+
+// TestGetDebtorsIntegration tests the get_debtors tool
+func TestGetDebtorsIntegration(t *testing.T) {
+	host := os.Getenv("TALLY_HOST")
+	if host == "" {
+		t.Skip("TALLY_HOST not set")
+	}
+
+	log, _ := logger.New("warn", "")
+	port := getIntEnvOrDefault("TALLY_PORT", 9900)
+	company := os.Getenv("TALLY_COMPANY")
+	client := tally.NewClient(host, port, 30)
+	client.SetCompany(company)
+	handler := mcp.NewHandler(client, log)
+
+	result, err := handler.HandleToolCall("get_debtors", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("get_debtors failed: %v", err)
+	}
+
+	resultMap := result.(map[string]interface{})
+	if !resultMap["success"].(bool) {
+		t.Fatal("get_debtors returned success=false")
+	}
+
+	debtors := resultMap["debtors"].([]tally.Debtor)
+	t.Logf("✓ get_debtors returned %d debtors", len(debtors))
+	for i, debtor := range debtors {
+		if i < 3 {
+			t.Logf("  Debtor %d: %s (Outstanding: %.2f)", i+1, debtor.Name, debtor.OutstandingAmount)
+		}
+	}
+}
+
+// TestGetCreditorsIntegration tests the get_creditors tool
+func TestGetCreditorsIntegration(t *testing.T) {
+	host := os.Getenv("TALLY_HOST")
+	if host == "" {
+		t.Skip("TALLY_HOST not set")
+	}
+
+	log, _ := logger.New("warn", "")
+	port := getIntEnvOrDefault("TALLY_PORT", 9900)
+	company := os.Getenv("TALLY_COMPANY")
+	client := tally.NewClient(host, port, 30)
+	client.SetCompany(company)
+	handler := mcp.NewHandler(client, log)
+
+	result, err := handler.HandleToolCall("get_creditors", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("get_creditors failed: %v", err)
+	}
+
+	resultMap := result.(map[string]interface{})
+	if !resultMap["success"].(bool) {
+		t.Fatal("get_creditors returned success=false")
+	}
+
+	creditors := resultMap["creditors"].([]tally.Creditor)
+	t.Logf("✓ get_creditors returned %d creditors", len(creditors))
+	for i, creditor := range creditors {
+		if i < 3 {
+			t.Logf("  Creditor %d: %s (Outstanding: %.2f)", i+1, creditor.Name, creditor.OutstandingAmount)
+		}
+	}
+}
+
+// TestGetVouchersIntegration tests the get_vouchers tool
+func TestGetVouchersIntegration(t *testing.T) {
+	host := os.Getenv("TALLY_HOST")
+	if host == "" {
+		t.Skip("TALLY_HOST not set")
+	}
+
+	log, _ := logger.New("warn", "")
+	port := getIntEnvOrDefault("TALLY_PORT", 9900)
+	company := os.Getenv("TALLY_COMPANY")
+	client := tally.NewClient(host, port, 30)
+	client.SetCompany(company)
+	handler := mcp.NewHandler(client, log)
+
+	result, err := handler.HandleToolCall("get_vouchers", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("get_vouchers failed: %v", err)
+	}
+
+	resultMap := result.(map[string]interface{})
+	if !resultMap["success"].(bool) {
+		t.Fatal("get_vouchers returned success=false")
+	}
+
+	vouchers := resultMap["vouchers"].([]tally.Voucher)
+	t.Logf("✓ get_vouchers returned %d vouchers", len(vouchers))
+	for i, voucher := range vouchers {
+		if i < 3 {
+			t.Logf("  Voucher %d: %s (%s) - %s Amount: %.2f", i+1, voucher.VoucherID, voucher.Type, voucher.Date, voucher.Amount)
+		}
+	}
+}
+
+// TestAllGetToolsSequenceIntegration tests all get_ tools in sequence
+func TestAllGetToolsSequenceIntegration(t *testing.T) {
+	host := os.Getenv("TALLY_HOST")
+	if host == "" {
+		t.Skip("TALLY_HOST not set")
+	}
+
+	log, _ := logger.New("warn", "")
+	port := getIntEnvOrDefault("TALLY_PORT", 9900)
+	company := os.Getenv("TALLY_COMPANY")
+	client := tally.NewClient(host, port, 30)
+	client.SetCompany(company)
+	handler := mcp.NewHandler(client, log)
+
+	t.Logf("Testing all GET tools sequentially...")
+
+	// Test 1: get_companies
+	result, err := handler.HandleToolCall("get_companies", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("get_companies failed: %v", err)
+	}
+	companies := result.(map[string]interface{})["companies"].([]tally.Company)
+	t.Logf("✓ get_companies: %d companies", len(companies))
+
+	// Test 2: get_ledgers
+	result, err = handler.HandleToolCall("get_ledgers", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("get_ledgers failed: %v", err)
+	}
+	ledgers := result.(map[string]interface{})["ledgers"].([]tally.Ledger)
+	t.Logf("✓ get_ledgers: %d ledgers", len(ledgers))
+
+	// Test 3: get_debtors
+	result, err = handler.HandleToolCall("get_debtors", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("get_debtors failed: %v", err)
+	}
+	debtors := result.(map[string]interface{})["debtors"].([]tally.Debtor)
+	t.Logf("✓ get_debtors: %d debtors", len(debtors))
+
+	// Test 4: get_creditors
+	result, err = handler.HandleToolCall("get_creditors", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("get_creditors failed: %v", err)
+	}
+	creditors := result.(map[string]interface{})["creditors"].([]tally.Creditor)
+	t.Logf("✓ get_creditors: %d creditors", len(creditors))
+
+	// Test 5: get_vouchers
+	result, err = handler.HandleToolCall("get_vouchers", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("get_vouchers failed: %v", err)
+	}
+	vouchers := result.(map[string]interface{})["vouchers"].([]tally.Voucher)
+	t.Logf("✓ get_vouchers: %d vouchers", len(vouchers))
+
+	t.Logf("\n✓✓✓ All 5 GET tools working successfully ✓✓✓")
+	t.Logf("Summary: Companies=%d, Ledgers=%d, Debtors=%d, Creditors=%d, Vouchers=%d",
+		len(companies), len(ledgers), len(debtors), len(creditors), len(vouchers))
+}
