@@ -12,6 +12,9 @@ build-linux:
 build-windows:
 	GOOS=windows GOARCH=amd64 go build -o tally-mcp.exe .
 
+docker-build:
+	docker build -t tally-mcp:latest .
+
 test:
 	go test -v ./...
 
