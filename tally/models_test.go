@@ -34,3 +34,17 @@ func TestVoucherModel(t *testing.T) {
 		t.Errorf("Expected ID 'INV-001', got '%s'", voucher.VoucherID)
 	}
 }
+
+func TestCompanyModel(t *testing.T) {
+	company := Company{
+		Name: "DemoCompany",
+		GUID: "123abc",
+	}
+
+	if company.Name != "DemoCompany" {
+		t.Errorf("Expected name 'DemoCompany', got '%s'", company.Name)
+	}
+	if company.GUID != "123abc" {
+		t.Errorf("Expected GUID '123abc', got '%s'", company.GUID)
+	}
+}

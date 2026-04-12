@@ -70,3 +70,9 @@ type TallyResponse struct {
 	Error   string
 	Data    interface{}
 }
+
+// Company represents a Tally company
+type Company struct {
+	Name string
+	GUID string
+}
