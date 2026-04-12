@@ -85,37 +85,6 @@ func GetCreditorsTool() Tool {
 	}
 }
 
-// GetVouchersTool returns the get_vouchers tool definition
-func GetVouchersTool() Tool {
-	return Tool{
-		Name:        "get_vouchers",
-		Description: "Query vouchers with optional filtering by type, date range, or ledger",
-		IsWrite:     false,
-		InputSchema: map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"voucher_type": map[string]interface{}{
-					"type":        "string",
-					"description": "Filter by voucher type: Invoice, Payment, Expense, or All",
-					"enum":        []string{"Invoice", "Payment", "Expense", "All"},
-				},
-				"from_date": map[string]interface{}{
-					"type":        "string",
-					"description": "Start date in YYYY-MM-DD format",
-				},
-				"to_date": map[string]interface{}{
-					"type":        "string",
-					"description": "End date in YYYY-MM-DD format",
-				},
-				"ledger_name": map[string]interface{}{
-					"type":        "string",
-					"description": "Filter by specific ledger name",
-				},
-			},
-		},
-	}
-}
-
 // CreateLedgerTool returns the create_ledger tool definition
 func CreateLedgerTool() Tool {
 	return Tool{
@@ -218,7 +187,6 @@ func AllTools() []Tool {
 		GetLedgerDetailsTool(),
 		GetDebtorsTool(),
 		GetCreditorsTool(),
-		GetVouchersTool(),
 		CreateLedgerTool(),
 		CreateVoucherTool(),
 	}

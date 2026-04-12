@@ -34,8 +34,6 @@ func (h *Handler) HandleToolCall(toolName string, params map[string]interface{})
 		return h.handleGetDebtors()
 	case "get_creditors":
 		return h.handleGetCreditors()
-	case "get_vouchers":
-		return h.handleGetVouchers(params)
 	case "create_ledger":
 		return h.handleCreateLedger(params)
 	case "create_voucher":
@@ -223,58 +221,6 @@ func (h *Handler) handleGetCreditors() (interface{}, error) {
 
 	if h.log != nil {
 		h.log.Info("get_creditors completed", "count", len(creditors))
-	}
-
-	return response, nil
-}
-
-// handleGetVouchers fetches vouchers with optional filtering
-func (h *Handler) handleGetVouchers(params map[string]interface{}) (interface{}, error) {
-	templateParams := map[string]string{}
-
-	// Extract optional parameters
-	if voucherType, ok := params["voucher_type"].(string); ok {
-		templateParams["voucher_type"] = voucherType
-	}
-	if fromDate, ok := params["from_date"].(string); ok {
-		templateParams["from_date"] = fromDate
-	} else {
-		templateParams["from_date"] = ""
-	}
-	if toDate, ok := params["to_date"].(string); ok {
-		templateParams["to_date"] = toDate
-	} else {
-		templateParams["to_date"] = ""
-	}
-
-	if h.log != nil {
-		h.log.Info("get_vouchers called", "from_date", templateParams["from_date"], "to_date", templateParams["to_date"])
-	}
-
-	xmlResponse, err := h.client.ExecuteTemplate("voucher/get_vouchers", templateParams)
-	if err != nil {
-		if h.log != nil {
-			h.log.Warn("get_vouchers failed", "error", err.Error())
-		}
-		return nil, fmt.Errorf("failed to execute template: %w", err)
-	}
-
-	vouchers, err := tally.ParseVouchersResponse(xmlResponse)
-	if err != nil {
-		if h.log != nil {
-			h.log.Warn("failed to parse vouchers response", "error", err.Error())
-		}
-		return nil, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	response := map[string]interface{}{
-		"success":   true,
-		"vouchers":  vouchers,
-		"count":     len(vouchers),
-	}
-
-	if h.log != nil {
-		h.log.Info("get_vouchers completed", "count", len(vouchers))
 	}
 
 	return response, nil
