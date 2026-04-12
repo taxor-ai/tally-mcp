@@ -20,6 +20,14 @@ type ToolResult = mcp.ToolResult
 type ContentBlock = mcp.ContentBlock
 
 func main() {
+	// Recover from panics and log to stderr
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "PANIC: %v\n", r)
+			os.Exit(1)
+		}
+	}()
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
@@ -35,8 +43,10 @@ func main() {
 	}
 	defer func() {
 		if log != nil {
-			// Flush any pending logs
-			_ = log.Sync()
+			// Flush any pending logs (ignore errors)
+			if err := log.Sync(); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: error syncing logger: %v\n", err)
+			}
 		}
 	}()
 

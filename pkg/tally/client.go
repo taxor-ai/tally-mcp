@@ -141,7 +141,7 @@ func ParseCompaniesResponse(xmlData []byte) ([]Company, error) {
 	// Define the response structure based on Tally's XML format
 	// Structure: ENVELOPE > BODY > DATA > COLLECTION > COMPANY
 	type CompanyXML struct {
-		Name string `xml:"NAME"`
+		Name string `xml:"NAME,attr"`
 		GUID string `xml:"GUID"`
 	}
 
@@ -170,7 +170,7 @@ func ParseCompaniesResponse(xmlData []byte) ([]Company, error) {
 // ParseLedgersResponse parses the XML response from Tally's GetLedgers query
 func ParseLedgersResponse(xmlData []byte, filterType string) ([]Ledger, error) {
 	type LedgerXML struct {
-		Name     string `xml:"NAME"`
+		Name     string `xml:"NAME,attr"`
 		Parent   string `xml:"PARENT"`
 		IsAggregate string `xml:"$ISAGGREGATE"`
 		ReservedName string `xml:"$RESERVEDNAME"`
@@ -240,7 +240,7 @@ func ParseLedgerDetailsResponse(xmlData []byte) (*Ledger, error) {
 // ParseDebtorsResponse parses the XML response from Tally's GetDebtors query
 func ParseDebtorsResponse(xmlData []byte) ([]Debtor, error) {
 	type DebtorXML struct {
-		Name              string `xml:"NAME"`
+		Name              string `xml:"NAME,attr"`
 		OutstandingAmount string `xml:"OUTSTANDINGAMOUNT"`
 		CreditLimit       string `xml:"CREDITLIMIT"`
 		DaysOutstanding   string `xml:"DAYSOUTSTANDING"`
@@ -285,7 +285,7 @@ func ParseDebtorsResponse(xmlData []byte) ([]Debtor, error) {
 // ParseCreditorsResponse parses the XML response from Tally's GetCreditors query
 func ParseCreditorsResponse(xmlData []byte) ([]Creditor, error) {
 	type CreditorXML struct {
-		Name              string `xml:"NAME"`
+		Name              string `xml:"NAME,attr"`
 		OutstandingAmount string `xml:"OUTSTANDINGAMOUNT"`
 		PaymentTerms      string `xml:"PAYMENTTERMS"`
 		DaysOutstanding   string `xml:"DAYSOUTSTANDING"`

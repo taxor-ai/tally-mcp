@@ -88,7 +88,9 @@ func (h *Handler) handleGetLedgers(params map[string]interface{}) (interface{}, 
 		h.log.Info("get_ledgers called", "filter_type", filterType)
 	}
 
-	xmlResponse, err := h.client.ExecuteTemplate("ledger/get_ledgers", map[string]string{})
+	xmlResponse, err := h.client.ExecuteTemplate("ledger/get_ledgers", map[string]string{
+		"company_name": h.client.Company,
+	})
 	if err != nil {
 		if h.log != nil {
 			h.log.Warn("get_ledgers failed", "error", err.Error())
@@ -134,6 +136,7 @@ func (h *Handler) handleGetLedgerDetails(params map[string]interface{}) (interfa
 
 	xmlResponse, err := h.client.ExecuteTemplate("ledger/get_ledger_details", map[string]string{
 		"ledger_name": ledgerName,
+		"company_name": h.client.Company,
 	})
 	if err != nil {
 		if h.log != nil {
@@ -166,7 +169,9 @@ func (h *Handler) handleGetDebtors() (interface{}, error) {
 		h.log.Info("get_debtors called")
 	}
 
-	xmlResponse, err := h.client.ExecuteTemplate("debtor_creditor/get_debtors", map[string]string{})
+	xmlResponse, err := h.client.ExecuteTemplate("debtor_creditor/get_debtors", map[string]string{
+		"company_name": h.client.Company,
+	})
 	if err != nil {
 		if h.log != nil {
 			h.log.Warn("get_debtors failed", "error", err.Error())
@@ -201,7 +206,9 @@ func (h *Handler) handleGetCreditors() (interface{}, error) {
 		h.log.Info("get_creditors called")
 	}
 
-	xmlResponse, err := h.client.ExecuteTemplate("debtor_creditor/get_creditors", map[string]string{})
+	xmlResponse, err := h.client.ExecuteTemplate("debtor_creditor/get_creditors", map[string]string{
+		"company_name": h.client.Company,
+	})
 	if err != nil {
 		if h.log != nil {
 			h.log.Warn("get_creditors failed", "error", err.Error())

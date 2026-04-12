@@ -16,9 +16,9 @@ Built with Go for cross-platform support (macOS, Linux, Windows).
 
 ## Features
 
-✅ **Read Operations**
+✅ **Read Operations** (Fully Tested & Working)
 - `get_companies` - List all companies in Tally
-- `get_ledgers` - List all ledgers (with optional filtering)
+- `get_ledgers` - List all ledgers from the configured company
 - `get_ledger_details` - Get detailed information for a specific ledger
 - `get_debtors` - List all debtor ledgers with outstanding amounts
 - `get_creditors` - List all creditor ledgers with outstanding amounts
@@ -34,8 +34,13 @@ Built with Go for cross-platform support (macOS, Linux, Windows).
 
 ✅ **Easy Installation**
 - Single `.mcpb` file
-- No complex setup or dependencies
+- Automated build script (`build/claude_extension.sh`)
 - Configuration via Claude Desktop UI
+
+✅ **Well-Tested**
+- Integration tests against real Tally instances
+- Comprehensive test suite included
+- All core features verified working
 
 ## Prerequisites
 
@@ -79,64 +84,61 @@ See **Building from Source** section below.
 
 ### Quick Build
 
+The simplest way to build:
+
 ```bash
 # Clone the repository
 git clone https://github.com/taxor-ai/tally-mcp.git
 cd tally-mcp
 
-# Build binaries for all platforms
-go build -o dist/tally-mcp-bundle/server/tally-mcp-mac .
-GOOS=darwin GOARCH=amd64 go build -o dist/tally-mcp-bundle/server/tally-mcp-mac-x86 .
-GOOS=linux GOARCH=amd64 go build -o dist/tally-mcp-bundle/server/tally-mcp-linux .
-GOOS=windows GOARCH=amd64 go build -o dist/tally-mcp-bundle/server/tally-mcp.exe .
-
-# Make wrapper script executable
-chmod +x dist/tally-mcp-bundle/server/tally-mcp
-
-# Package as .mcpb
-npx @anthropic-ai/mcpb pack dist/tally-mcp-bundle dist/tally-mcp-0.1.0.mcpb
+# Run the build script
+./build/claude_extension.sh
 ```
 
-### Build Script (Optional)
+This creates a ready-to-install `.mcpb` file at `dist/tally-mcp-0.1.0.mcpb`.
 
-Create a `build.sh` file:
+### Build Script Details
+
+The automated build script at `build/claude_extension.sh` handles:
+
+- Building binaries for all platforms (macOS ARM64/Intel, Linux, Windows)
+- Copying extension metadata (manifest, icon)
+- Validating the configuration
+- Packaging as `.mcpb` file
+- Displaying installation instructions
+
+**Usage:**
+```bash
+./build/claude_extension.sh
+```
+
+**Output:**
+- Extension file: `dist/tally-mcp-0.1.0.mcpb`
+- Ready to install in Claude Desktop
+- Includes SHA256 hash for verification
+
+### Manual Build (Advanced)
+
+If you need more control, build step by step:
 
 ```bash
-#!/bin/bash
-set -e
+# Create directory structure
+mkdir -p dist/tally-mcp-bundle/server
 
-echo "Building Tally MCP for all platforms..."
-
-# macOS ARM64
+# Build binaries
 GOOS=darwin GOARCH=arm64 go build -o dist/tally-mcp-bundle/server/tally-mcp-mac .
-echo "✅ Built macOS ARM64"
-
-# macOS Intel
 GOOS=darwin GOARCH=amd64 go build -o dist/tally-mcp-bundle/server/tally-mcp-mac-x86 .
-echo "✅ Built macOS Intel"
-
-# Linux
 GOOS=linux GOARCH=amd64 go build -o dist/tally-mcp-bundle/server/tally-mcp-linux .
-echo "✅ Built Linux"
-
-# Windows
 GOOS=windows GOARCH=amd64 go build -o dist/tally-mcp-bundle/server/tally-mcp.exe .
-echo "✅ Built Windows"
 
-# Make wrapper executable
+# Copy metadata
+cp integrations/claude/manifest.json dist/tally-mcp-bundle/
+cp integrations/claude/icon.png dist/tally-mcp-bundle/
+cp tally-mcp dist/tally-mcp-bundle/server/
 chmod +x dist/tally-mcp-bundle/server/tally-mcp
 
 # Package
-echo "📦 Packaging as .mcpb..."
 npx @anthropic-ai/mcpb pack dist/tally-mcp-bundle dist/tally-mcp-0.1.0.mcpb
-
-echo "✅ Build complete! File: dist/tally-mcp-0.1.0.mcpb"
-```
-
-Then run:
-```bash
-chmod +x build.sh
-./build.sh
 ```
 
 ## Configuration
@@ -254,13 +256,36 @@ export TALLY_LOG_LEVEL=debug
 
 ### Testing
 
+**Unit Tests**
 ```bash
-# Run tests
+# Run all unit tests
 go test ./...
 
 # With coverage
 go test -cover ./...
 ```
+
+**Integration Tests** (requires live Tally instance)
+```bash
+# Test against real Tally server
+TALLY_HOST=localhost TALLY_PORT=9000 TALLY_COMPANY="Your Company" \
+go test -tags=integration -v ./tests/integration/...
+
+# Run specific test
+TALLY_HOST=localhost TALLY_PORT=9000 TALLY_COMPANY="Your Company" \
+go test -tags=integration -run TestGetLedgersIntegration -v ./tests/integration/...
+
+# Test all GET commands in sequence
+TALLY_HOST=localhost TALLY_PORT=9000 TALLY_COMPANY="Your Company" \
+go test -tags=integration -run TestAllGetToolsSequenceIntegration -v ./tests/integration/...
+```
+
+**Available Integration Tests:**
+- `TestGetCompaniesRealTally` - Verify company retrieval
+- `TestGetLedgersIntegration` - Verify ledger retrieval
+- `TestGetDebtorsIntegration` - Verify debtor retrieval
+- `TestGetCreditorsIntegration` - Verify creditor retrieval
+- `TestAllGetToolsSequenceIntegration` - Comprehensive test of all GET tools
 
 ### Adding New Tools
 
@@ -314,13 +339,33 @@ type Tool struct {
 
 ### Empty results from tools
 
-**Cause:** Tally server not responding or data doesn't exist
+**Cause:** Multiple possible reasons:
+1. Tally server not responding
+2. Company name is incorrect or empty
+3. Tally instance doesn't have data for that company
+4. Network connectivity issues
 
 **Solution:**
-- Verify Tally server is running
-- Check network connectivity
-- Verify company name is correct
-- Enable debug logging
+- Verify Tally server is running at the configured host/port
+- **Double-check company name** - Must match exactly as shown in Tally
+- Verify network connectivity: `ping [TALLY_HOST]`
+- Check environment variables are set correctly:
+  ```bash
+  echo $TALLY_HOST
+  echo $TALLY_PORT
+  echo $TALLY_COMPANY
+  ```
+- Enable debug logging to see XML requests/responses:
+  ```bash
+  export TALLY_LOG_LEVEL=debug
+  ```
+
+**Testing connectivity:**
+```bash
+# Run integration tests against your Tally instance
+TALLY_HOST=your.tally.host TALLY_PORT=9000 TALLY_COMPANY="Company Name" \
+go test -tags=integration -v ./tests/integration/...
+```
 
 See [blog post](../blogs/creating-claude-desktop-extension.md) for more detailed troubleshooting.
 

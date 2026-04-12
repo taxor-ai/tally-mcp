@@ -24,6 +24,7 @@
       "type": "string",
       "title": "Tally Server Host",
       "description": "Tally server hostname or IP address (e.g., localhost, 192.168.1.100)",
+      "default": "localhost",
       "required": true
     },
     "tally_port": {
