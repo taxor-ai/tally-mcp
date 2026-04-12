@@ -1,0 +1,10 @@
+# config/config.yaml.example
+tally:
+  host: localhost
+  port: 9900
+  company: DemoCompany
+  timeout_seconds: 30
+
+logging:
+  level: info
+  file: ./tally-mcp.log
