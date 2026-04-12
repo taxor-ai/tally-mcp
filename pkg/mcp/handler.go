@@ -3,8 +3,8 @@ package mcp
 import (
 	"fmt"
 
-	"github.com/taxor-ai/tally-mcp/logger"
-	"github.com/taxor-ai/tally-mcp/tally"
+	"github.com/taxor-ai/tally-mcp/pkg/logger"
+	"github.com/taxor-ai/tally-mcp/pkg/tally"
 )
 
 // Handler processes MCP tool calls
@@ -94,6 +94,10 @@ func (h *Handler) handleGetLedgers(params map[string]interface{}) (interface{}, 
 			h.log.Warn("get_ledgers failed", "error", err.Error())
 		}
 		return nil, fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	if h.log != nil {
+		h.log.Debugf("get_ledgers XML response length: %d bytes", len(xmlResponse))
 	}
 
 	ledgers, err := tally.ParseLedgersResponse(xmlResponse, filterType)
@@ -203,6 +207,10 @@ func (h *Handler) handleGetCreditors() (interface{}, error) {
 			h.log.Warn("get_creditors failed", "error", err.Error())
 		}
 		return nil, fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	if h.log != nil {
+		h.log.Debugf("get_creditors XML response length: %d bytes", len(xmlResponse))
 	}
 
 	creditors, err := tally.ParseCreditorsResponse(xmlResponse)

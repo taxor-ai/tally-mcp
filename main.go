@@ -7,38 +7,17 @@ import (
 	"io"
 	"os"
 
-	"github.com/taxor-ai/tally-mcp/config"
-	"github.com/taxor-ai/tally-mcp/logger"
-	"github.com/taxor-ai/tally-mcp/mcp"
-	"github.com/taxor-ai/tally-mcp/tally"
+	"github.com/taxor-ai/tally-mcp/pkg/config"
+	"github.com/taxor-ai/tally-mcp/pkg/logger"
+	"github.com/taxor-ai/tally-mcp/pkg/mcp"
+	"github.com/taxor-ai/tally-mcp/pkg/tally"
 )
 
-// MCPRequest represents a JSON-RPC 2.0 request for tool calling
-type MCPRequest struct {
-	JSONRPC string                 `json:"jsonrpc"`
-	ID      interface{}            `json:"id"`
-	Method  string                 `json:"method"`
-	Params  map[string]interface{} `json:"params"`
-}
-
-// MCPResponse represents a JSON-RPC 2.0 response
-type MCPResponse struct {
-	JSONRPC string      `json:"jsonrpc"`
-	ID      interface{} `json:"id"`
-	Result  interface{} `json:"result,omitempty"`
-	Error   interface{} `json:"error,omitempty"`
-}
-
-// ToolResult is the response format for tool calls
-type ToolResult struct {
-	Content []ContentBlock `json:"content"`
-}
-
-// ContentBlock represents a single content block in the result
-type ContentBlock struct {
-	Type string      `json:"type"`
-	Text string      `json:"text"`
-}
+// Type aliases for convenience (actual types are in pkg/mcp)
+type MCPRequest = mcp.JSONRPCRequest
+type MCPResponse = mcp.JSONRPCResponse
+type ToolResult = mcp.ToolResult
+type ContentBlock = mcp.ContentBlock
 
 func main() {
 	// Load configuration
@@ -103,8 +82,18 @@ func processMCPRequests(reader *bufio.Reader, handler *mcp.Handler, log *logger.
 			continue
 		}
 
+		// Check if this is a notification (no ID) or a request (has ID)
+		isNotification := req.ID == nil
+
 		// Handle different methods
 		switch req.Method {
+		case "initialize":
+			handleInitialize(req, log)
+
+		case "notifications/initialized":
+			log.Debugf("Client initialized")
+			// Notifications don't get responses
+
 		case "tools/call":
 			handleToolCall(req, handler, log)
 
@@ -112,8 +101,10 @@ func processMCPRequests(reader *bufio.Reader, handler *mcp.Handler, log *logger.
 			handleToolsList(req, handler, log)
 
 		default:
-			log.Warnf("Unknown method: %s", req.Method)
-			writeError(req.ID, "method_not_found", fmt.Sprintf("Method %s not found", req.Method))
+			if !isNotification {
+				log.Warnf("Unknown method: %s", req.Method)
+				writeError(req.ID, "method_not_found", fmt.Sprintf("Method %s not found", req.Method))
+			}
 		}
 	}
 }
@@ -164,6 +155,28 @@ func handleToolCall(req MCPRequest, handler *mcp.Handler, log *logger.Logger) {
 		JSONRPC: "2.0",
 		ID:      req.ID,
 		Result:  toolResult,
+	}
+
+	writeResponse(response)
+}
+
+// handleInitialize handles the MCP initialize request
+func handleInitialize(req MCPRequest, log *logger.Logger) {
+	log.Debugf("Handling initialize request")
+
+	response := MCPResponse{
+		JSONRPC: "2.0",
+		ID:      req.ID,
+		Result: map[string]interface{}{
+			"protocolVersion": "2025-11-25",
+			"capabilities": map[string]interface{}{
+				"tools": map[string]interface{}{},
+			},
+			"serverInfo": map[string]interface{}{
+				"name":    "Tally MCP",
+				"version": "0.1.0",
+			},
+		},
 	}
 
 	writeResponse(response)

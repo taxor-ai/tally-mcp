@@ -2,10 +2,10 @@ package mcp
 
 // Tool represents an MCP tool
 type Tool struct {
-	Name        string
-	Description string
-	InputSchema map[string]interface{}
-	IsWrite     bool
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	InputSchema map[string]interface{} `json:"inputSchema"`
+	IsWrite     bool                   `json:"isWrite"`
 }
 
 // GetCompaniesTool returns the get_companies tool definition

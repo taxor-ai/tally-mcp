@@ -26,7 +26,7 @@ func New(level, filePath string) (*Logger, error) {
 
 	config := zap.NewProductionConfig()
 	config.Level = zap.NewAtomicLevelAt(zapLevel)
-	config.OutputPaths = []string{"stdout"}
+	config.OutputPaths = []string{"stderr"}
 
 	if filePath != "" {
 		config.OutputPaths = append(config.OutputPaths, filePath)

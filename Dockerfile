@@ -31,7 +31,7 @@ RUN apk add --no-cache ca-certificates
 COPY --from=builder /app/tally-mcp .
 
 # Copy templates directory
-COPY --from=builder /app/tally ./tally
+COPY --from=builder /app/pkg/tally ./pkg/tally
 
 # Set environment variables with defaults
 ENV TALLY_HOST=${TALLY_HOST:-localhost}

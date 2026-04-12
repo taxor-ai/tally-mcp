@@ -17,7 +17,7 @@
                 <TDLMESSAGE>
                     <COLLECTION NAME="AllVouchers">
                         <TYPE>Voucher</TYPE>
-                        <FETCH>DATE, VOUCHERNUMBER, REFERENCE, NARRATION, VOUCHERTYPENAME, ALLLEDGERENTRIES</FETCH>
+                        <FETCH>DATE, VOUCHERNUMBER, REFERENCE, NARRATION, VOUCHERTYPENAME</FETCH>
                     </COLLECTION>
                 </TDLMESSAGE>
             </TDL>

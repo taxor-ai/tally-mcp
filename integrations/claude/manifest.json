@@ -1,0 +1,43 @@
+{
+  "manifest_version": "0.2",
+  "name": "Tally MCP",
+  "version": "0.1.0",
+  "description": "Connect Claude to your Tally accounting data. Query companies, ledgers, debtors, and creditors from Tally.",
+  "author": {
+    "name": "Taxor AI"
+  },
+  "server": {
+    "type": "binary",
+    "entry_point": "server/tally-mcp",
+    "mcp_config": {
+      "command": "${__dirname}/server/tally-mcp",
+      "env": {
+        "TALLY_HOST": "${user_config.tally_host}",
+        "TALLY_PORT": "${user_config.tally_port}",
+        "TALLY_COMPANY": "${user_config.tally_company}",
+        "TALLY_LOG_LEVEL": "debug"
+      }
+    }
+  },
+  "user_config": {
+    "tally_host": {
+      "type": "string",
+      "title": "Tally Server Host",
+      "description": "Tally server hostname or IP address (e.g., localhost, 192.168.1.100)",
+      "required": true
+    },
+    "tally_port": {
+      "type": "string",
+      "title": "Tally Server Port",
+      "description": "Port number where Tally server is running",
+      "default": "9000"
+    },
+    "tally_company": {
+      "type": "string",
+      "title": "Company Name",
+      "description": "Company name as it appears in Tally",
+      "required": true
+    }
+  },
+  "license": "MIT"
+}

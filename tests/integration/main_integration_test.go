@@ -7,10 +7,16 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/taxor-ai/tally-mcp/logger"
-	"github.com/taxor-ai/tally-mcp/mcp"
-	"github.com/taxor-ai/tally-mcp/tally"
+	"github.com/taxor-ai/tally-mcp/pkg/logger"
+	"github.com/taxor-ai/tally-mcp/pkg/mcp"
+	"github.com/taxor-ai/tally-mcp/pkg/tally"
 )
+
+// Type aliases for test convenience
+type MCPRequest = mcp.JSONRPCRequest
+type MCPResponse = mcp.JSONRPCResponse
+type ToolResult = mcp.ToolResult
+type ContentBlock = mcp.ContentBlock
 
 // Helper to get int from environment with default
 func getIntEnvOrDefault(key string, defaultVal int) int {

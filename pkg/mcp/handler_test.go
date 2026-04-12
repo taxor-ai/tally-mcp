@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/taxor-ai/tally-mcp/tally"
+	"github.com/taxor-ai/tally-mcp/pkg/tally"
 )
 
 func TestHandleGetCompanies(t *testing.T) {
