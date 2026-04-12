@@ -1,0 +1,26 @@
+<ENVELOPE>
+    <HEADER>
+        <VERSION>1</VERSION>
+        <TALLYREQUEST>Export</TALLYREQUEST>
+        <TYPE>Collection</TYPE>
+        <ID>CreditorCollection</ID>
+    </HEADER>
+    <BODY>
+        <DESC>
+            <STATICVARIABLES>
+                <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
+                <SVCURRENTCOMPANY>{{ company_name | e }}</SVCURRENTCOMPANY>
+            </STATICVARIABLES>
+            <TDL>
+                <TDLMESSAGE>
+                    <COLLECTION NAME="CreditorCollection">
+                        <TYPE>Ledger</TYPE>
+                        <FETCH>NAME, PARENT, OPENINGBALANCE, CLOSINGBALANCE, CREDITLIMIT, STATENAME, EMAIL</FETCH>
+                        <FILTER>IsSundryCreditor</FILTER>
+                    </COLLECTION>
+                    <SYSTEM TYPE="Formula" NAME="IsSundryCreditor">($Parent = "Sundry Creditors")</SYSTEM>
+                </TDLMESSAGE>
+            </TDL>
+        </DESC>
+    </BODY>
+</ENVELOPE>

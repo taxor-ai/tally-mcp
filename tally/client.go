@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -164,4 +165,223 @@ func ParseCompaniesResponse(xmlData []byte) ([]Company, error) {
 	}
 
 	return companies, nil
+}
+
+// ParseLedgersResponse parses the XML response from Tally's GetLedgers query
+func ParseLedgersResponse(xmlData []byte, filterType string) ([]Ledger, error) {
+	type LedgerXML struct {
+		Name     string `xml:"NAME"`
+		Parent   string `xml:"PARENT"`
+		IsAggregate string `xml:"$ISAGGREGATE"`
+		ReservedName string `xml:"$RESERVEDNAME"`
+	}
+
+	type TallyResponse struct {
+		Ledgers []LedgerXML `xml:"BODY>DATA>COLLECTION>LEDGER"`
+	}
+
+	var result TallyResponse
+	err := xml.Unmarshal(xmlData, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse XML response: %w", err)
+	}
+
+	ledgers := make([]Ledger, 0)
+	for _, l := range result.Ledgers {
+		ledger := Ledger{
+			Name:        l.Name,
+			ParentGroup: l.Parent,
+		}
+		ledgers = append(ledgers, ledger)
+	}
+
+	return ledgers, nil
+}
+
+// ParseLedgerDetailsResponse parses the XML response for a specific ledger
+func ParseLedgerDetailsResponse(xmlData []byte) (*Ledger, error) {
+	type LedgerXML struct {
+		Name        string `xml:"NAME"`
+		Parent      string `xml:"PARENT"`
+		Description string `xml:"DESCRIPTION"`
+		CreatedDate string `xml:"CREATEDDATE"`
+		Balance     string `xml:"BALANCE"`
+	}
+
+	type TallyResponse struct {
+		Ledgers []LedgerXML `xml:"BODY>DATA>COLLECTION>LEDGER"`
+	}
+
+	var result TallyResponse
+	err := xml.Unmarshal(xmlData, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse XML response: %w", err)
+	}
+
+	if len(result.Ledgers) == 0 {
+		return nil, fmt.Errorf("ledger not found")
+	}
+
+	l := result.Ledgers[0]
+	balance := 0.0
+	if b, err := strconv.ParseFloat(l.Balance, 64); err == nil {
+		balance = b
+	}
+
+	return &Ledger{
+		Name:        l.Name,
+		ParentGroup: l.Parent,
+		Description: l.Description,
+		CreatedDate: l.CreatedDate,
+		Balance:     balance,
+	}, nil
+}
+
+// ParseDebtorsResponse parses the XML response from Tally's GetDebtors query
+func ParseDebtorsResponse(xmlData []byte) ([]Debtor, error) {
+	type DebtorXML struct {
+		Name              string `xml:"NAME"`
+		OutstandingAmount string `xml:"OUTSTANDINGAMOUNT"`
+		CreditLimit       string `xml:"CREDITLIMIT"`
+		DaysOutstanding   string `xml:"DAYSOUTSTANDING"`
+	}
+
+	type TallyResponse struct {
+		Debtors []DebtorXML `xml:"BODY>DATA>COLLECTION>LEDGER"`
+	}
+
+	var result TallyResponse
+	err := xml.Unmarshal(xmlData, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse XML response: %w", err)
+	}
+
+	debtors := make([]Debtor, 0)
+	for _, d := range result.Debtors {
+		outstanding := 0.0
+		if o, err := strconv.ParseFloat(d.OutstandingAmount, 64); err == nil {
+			outstanding = o
+		}
+		creditLimit := 0.0
+		if c, err := strconv.ParseFloat(d.CreditLimit, 64); err == nil {
+			creditLimit = c
+		}
+		daysOut := 0
+		if do, err := strconv.Atoi(d.DaysOutstanding); err == nil {
+			daysOut = do
+		}
+
+		debtors = append(debtors, Debtor{
+			Name:              d.Name,
+			OutstandingAmount: outstanding,
+			CreditLimit:       creditLimit,
+			DaysOutstanding:   daysOut,
+		})
+	}
+
+	return debtors, nil
+}
+
+// ParseCreditorsResponse parses the XML response from Tally's GetCreditors query
+func ParseCreditorsResponse(xmlData []byte) ([]Creditor, error) {
+	type CreditorXML struct {
+		Name              string `xml:"NAME"`
+		OutstandingAmount string `xml:"OUTSTANDINGAMOUNT"`
+		PaymentTerms      string `xml:"PAYMENTTERMS"`
+		DaysOutstanding   string `xml:"DAYSOUTSTANDING"`
+	}
+
+	type TallyResponse struct {
+		Creditors []CreditorXML `xml:"BODY>DATA>COLLECTION>LEDGER"`
+	}
+
+	var result TallyResponse
+	err := xml.Unmarshal(xmlData, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse XML response: %w", err)
+	}
+
+	creditors := make([]Creditor, 0)
+	for _, c := range result.Creditors {
+		outstanding := 0.0
+		if o, err := strconv.ParseFloat(c.OutstandingAmount, 64); err == nil {
+			outstanding = o
+		}
+		daysOut := 0
+		if do, err := strconv.Atoi(c.DaysOutstanding); err == nil {
+			daysOut = do
+		}
+
+		creditors = append(creditors, Creditor{
+			Name:              c.Name,
+			OutstandingAmount: outstanding,
+			PaymentTerms:      c.PaymentTerms,
+			DaysOutstanding:   daysOut,
+		})
+	}
+
+	return creditors, nil
+}
+
+// ParseVouchersResponse parses the XML response from Tally's GetVouchers query
+func ParseVouchersResponse(xmlData []byte) ([]Voucher, error) {
+	type VoucherXML struct {
+		Date            string `xml:"DATE"`
+		VoucherNumber   string `xml:"VOUCHERNUMBER"`
+		Reference       string `xml:"REFERENCE"`
+		Narration       string `xml:"NARRATION"`
+		VoucherTypeName string `xml:"VOUCHERTYPENAME"`
+		Amount          string `xml:"AMOUNT"`
+		Status          string `xml:"STATUS"`
+	}
+
+	type TallyResponse struct {
+		Vouchers []VoucherXML `xml:"BODY>DATA>COLLECTION>VOUCHER"`
+	}
+
+	var result TallyResponse
+	err := xml.Unmarshal(xmlData, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse XML response: %w", err)
+	}
+
+	vouchers := make([]Voucher, 0)
+	for _, v := range result.Vouchers {
+		amount := 0.0
+		if a, err := strconv.ParseFloat(v.Amount, 64); err == nil {
+			amount = a
+		}
+
+		vouchers = append(vouchers, Voucher{
+			VoucherID:   v.VoucherNumber,
+			Type:        v.VoucherTypeName,
+			Date:        v.Date,
+			Amount:      amount,
+			Status:      v.Status,
+			Description: v.Narration,
+		})
+	}
+
+	return vouchers, nil
+}
+
+// ParseCreateResponse parses the response from create operations (ledger/voucher)
+func ParseCreateResponse(xmlData []byte) (bool, error) {
+	type TallyResponse struct {
+		Status string `xml:"STATUS"`
+		Error  string `xml:"ERROR"`
+	}
+
+	var result TallyResponse
+	err := xml.Unmarshal(xmlData, &result)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse XML response: %w", err)
+	}
+
+	// Check if there was an error
+	if result.Error != "" {
+		return false, fmt.Errorf("tally error: %s", result.Error)
+	}
+
+	return result.Status == "Success", nil
 }
