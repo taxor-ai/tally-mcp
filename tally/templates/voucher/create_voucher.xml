@@ -1,0 +1,42 @@
+<ENVELOPE>
+    <HEADER>
+        <VERSION>1</VERSION>
+        <TALLYREQUEST>Import</TALLYREQUEST>
+        <TYPE>Data</TYPE>
+        <ID>Vouchers</ID>
+    </HEADER>
+    <BODY>
+        <DESC>
+            <STATICVARIABLES>
+                <SVCURRENTCOMPANY>{{ company_name | e }}</SVCURRENTCOMPANY>
+            </STATICVARIABLES>
+        </DESC>
+        <DATA>
+            <TALLYMESSAGE xmlns:UDF="TallyUDF">
+                <VOUCHER VCHTYPE="Journal" ACTION="Create" OBJVIEW="Accounting Voucher View">
+                    <DATE>{{ date }}</DATE>
+                    <VOUCHERTYPENAME>Journal</VOUCHERTYPENAME>
+                    <REFERENCE>{{ reference | e }}</REFERENCE>
+                    <NARRATION>{{ narration | e }}</NARRATION>
+
+                    {% for line in lines %}
+                    <ALLLEDGERENTRIES.LIST>
+                        <LEDGERNAME>{{ line.ledger_name | e }}</LEDGERNAME>
+                        <ISDEEMEDPOSITIVE>{{ "Yes" if line.entry_type == "debit" else "No" }}</ISDEEMEDPOSITIVE>
+                        <AMOUNT>{{ line.tally_amount }}</AMOUNT>
+                        {% if line.bill_allocations %}
+                        {% for bill in line.bill_allocations %}
+                        <BILLALLOCATIONS.LIST>
+                            <NAME>{{ bill.name | e }}</NAME>
+                            <BILLTYPE>{{ bill.type | e }}</BILLTYPE>
+                            <AMOUNT>{{ bill.amount }}</AMOUNT>
+                        </BILLALLOCATIONS.LIST>
+                        {% endfor %}
+                        {% endif %}
+                    </ALLLEDGERENTRIES.LIST>
+                    {% endfor %}
+                </VOUCHER>
+            </TALLYMESSAGE>
+        </DATA>
+    </BODY>
+</ENVELOPE>
