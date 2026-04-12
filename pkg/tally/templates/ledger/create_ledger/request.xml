@@ -12,9 +12,9 @@
             </REQUESTDESC>
             <REQUESTDATA>
                 <TALLYMESSAGE xmlns:UDF="TallyUDF">
-                    <LEDGER NAME="{{ name | e }}" ACTION="Create">
+                    <LEDGER NAME="{{ ledger_name | e }}" ACTION="Create">
                         <NAME.LIST>
-                            <NAME>{{ name | e }}</NAME>
+                            <NAME>{{ ledger_name | e }}</NAME>
                         </NAME.LIST>
                         <PARENT>{{ parent | e }}</PARENT>
                     </LEDGER>

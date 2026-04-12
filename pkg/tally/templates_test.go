@@ -7,7 +7,7 @@ import (
 
 func TestLoadTemplate(t *testing.T) {
 	params := map[string]string{
-		"name":           "Office Supplies",
+		"ledger_name":    "Office Supplies",
 		"parent":         "Indirect Expenses",
 		"company_name":   "Test Company",
 	}

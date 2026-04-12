@@ -35,6 +35,8 @@ func getIntEnvOrDefaultMain(key string, defaultVal int) int {
 // TestGetCompaniesUnit tests get_companies tool through the MCP handler
 // This test skips if Tally is not available (requires TALLY_HOST env var)
 func TestGetCompaniesUnit(t *testing.T) {
+	setupTemplatesDir(t)
+
 	// Skip if Tally is not available in unit test environment
 	if os.Getenv("TALLY_HOST") == "" {
 		t.Skip("TALLY_HOST not set, skipping (use integration test with -tags=integration)")
@@ -53,8 +55,14 @@ func TestGetCompaniesUnit(t *testing.T) {
 	client := tally.NewClient(host, port, 30)
 	client.SetCompany(company)
 
+	// Load registry
+	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	if err != nil {
+		t.Fatalf("Failed to load registry: %v", err)
+	}
+
 	// Create MCP handler
-	handler := mcp.NewHandler(client, log)
+	handler := mcp.NewHandler(client, registry, log)
 
 	// Simulate processing the request
 	toolName := "get_companies"
@@ -83,9 +91,9 @@ func TestGetCompaniesUnit(t *testing.T) {
 	}
 
 	// Verify companies field exists
-	companies, ok := resultMap["companies"].([]tally.Company)
+	companies, ok := resultMap["companies"].([]map[string]interface{})
 	if !ok {
-		t.Fatalf("Expected companies to be []tally.Company, got %T", resultMap["companies"])
+		t.Fatalf("Expected companies to be []map[string]interface{}, got %T", resultMap["companies"])
 	}
 
 	// Verify companies are not empty
@@ -95,11 +103,11 @@ func TestGetCompaniesUnit(t *testing.T) {
 
 	// Verify company structure
 	for i, company := range companies {
-		if company.Name == "" {
-			t.Errorf("Company %d has empty Name", i)
+		if company["name"] == "" || company["name"] == nil {
+			t.Errorf("Company %d has empty name", i)
 		}
-		if company.GUID == "" {
-			t.Errorf("Company %d has empty GUID", i)
+		if company["guid"] == "" || company["guid"] == nil {
+			t.Errorf("Company %d has empty guid", i)
 		}
 	}
 
@@ -194,6 +202,8 @@ func TestMCPResponseFormatting(t *testing.T) {
 
 // TestUnknownToolErrorHandling tests that unknown tools return proper errors
 func TestUnknownToolErrorHandling(t *testing.T) {
+	setupTemplatesDir(t)
+
 	// Create logger
 	log, err := logger.New("debug", "")
 	if err != nil {
@@ -204,8 +214,14 @@ func TestUnknownToolErrorHandling(t *testing.T) {
 	client := tally.NewClient("localhost", 9900, 30)
 	client.SetCompany("TestCompany")
 
+	// Load registry
+	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	if err != nil {
+		t.Fatalf("Failed to load registry: %v", err)
+	}
+
 	// Create MCP handler
-	handler := mcp.NewHandler(client, log)
+	handler := mcp.NewHandler(client, registry, log)
 
 	// Try to call an unknown tool
 	_, err = handler.HandleToolCall("unknown_tool", map[string]interface{}{})
@@ -223,6 +239,8 @@ func TestUnknownToolErrorHandling(t *testing.T) {
 // TestCompleteRequestResponse tests a complete request/response cycle
 // Skips if Tally is not available (TALLY_HOST not set)
 func TestCompleteRequestResponse(t *testing.T) {
+	setupTemplatesDir(t)
+
 	// Skip if Tally is not available
 	if os.Getenv("TALLY_HOST") == "" {
 		t.Skip("TALLY_HOST not set, skipping test that requires Tally")
@@ -240,7 +258,11 @@ func TestCompleteRequestResponse(t *testing.T) {
 	port := getIntEnvOrDefaultMain("TALLY_PORT", 9900)
 	client := tally.NewClient(host, port, 30)
 	client.SetCompany(company)
-	handler := mcp.NewHandler(client, log)
+	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	if err != nil {
+		t.Fatalf("Failed to load registry: %v", err)
+	}
+	handler := mcp.NewHandler(client, registry, log)
 
 	// Create a request JSON string (simulating what stdin would provide)
 	requestJSON := `{
@@ -313,8 +335,26 @@ func TestCompleteRequestResponse(t *testing.T) {
 
 // TestToolsList tests the tools/list method
 func TestToolsList(t *testing.T) {
+	setupTemplatesDir(t)
+
+	// Create logger
+	log, _ := logger.New("warn", "")
+
+	// Create client
+	client := tally.NewClient("localhost", 9900, 30)
+	client.SetCompany("TestCompany")
+
+	// Load registry
+	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	if err != nil {
+		t.Fatalf("Failed to load registry: %v", err)
+	}
+
+	// Create handler
+	handler := mcp.NewHandler(client, registry, log)
+
 	// Get list of tools
-	tools := mcp.AllTools()
+	tools := handler.ListTools()
 
 	// Verify tools are available
 	if len(tools) == 0 {
@@ -342,19 +382,50 @@ func TestToolsList(t *testing.T) {
 
 // BenchmarkGetCompanies benchmarks the get_companies tool performance
 func BenchmarkGetCompanies(b *testing.B) {
+	// Set up templates directory (use os.Setenv since benchmarks don't use t.Cleanup)
+	os.Setenv("TALLY_TEMPLATES_DIR", "pkg/tally/templates")
+	defer os.Unsetenv("TALLY_TEMPLATES_DIR")
+
 	// Create logger (use /dev/null equivalent)
 	log, _ := logger.New("warn", "")
 
 	// Create handler
 	client := tally.NewClient("localhost", 9900, 30)
 	client.SetCompany("TestCompany")
-	handler := mcp.NewHandler(client, log)
+	registry, _ := tally.LoadRegistry("pkg/tally/templates")
+	handler := mcp.NewHandler(client, registry, log)
 
 	// Run the benchmark
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = handler.HandleToolCall("get_companies", map[string]interface{}{})
 	}
+}
+
+// setupTemplatesDir sets the TALLY_TEMPLATES_DIR environment variable for tests
+// Finds the templates directory relative to the project root
+func setupTemplatesDir(t *testing.T) {
+	// Try multiple paths to find templates from different test working directories
+	candidates := []string{
+		"pkg/tally/templates",
+		"../../pkg/tally/templates",
+		"../../../pkg/tally/templates",
+	}
+
+	var found string
+	for _, candidate := range candidates {
+		if _, err := os.Stat(candidate); err == nil {
+			found = candidate
+			break
+		}
+	}
+
+	if found == "" {
+		t.Fatal("Could not find pkg/tally/templates from any expected path")
+	}
+
+	os.Setenv("TALLY_TEMPLATES_DIR", found)
+	t.Cleanup(func() { os.Unsetenv("TALLY_TEMPLATES_DIR") })
 }
 
 // Helper function to assert JSON is valid

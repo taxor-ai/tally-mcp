@@ -1,0 +1,13 @@
+name: create_ledger
+description: Create a new ledger account in Tally
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    ledger_name:
+      type: string
+      description: Ledger name
+    parent:
+      type: string
+      description: Parent group name (e.g. Sundry Debtors, Direct Expenses)
+  required: [ledger_name, parent]

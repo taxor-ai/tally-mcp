@@ -1,0 +1,11 @@
+name: get_ledgers
+description: List all ledgers in Tally, optionally filtered by type
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    filter_type:
+      type: string
+      description: "Filter ledgers by type: asset, liability, income, expense, debtor, creditor, or all"
+      enum: [asset, liability, income, expense, debtor, creditor, all]
+  required: []

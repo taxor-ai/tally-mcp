@@ -1,0 +1,24 @@
+type: object
+root_xpath: //COLLECTION/LEDGER[1]
+result_key: ledger
+fields:
+  name:
+    xpath: "@NAME"
+  parent:
+    xpath: PARENT
+  gstin:
+    xpath: PARTYGSTIN
+  gst_registration_type:
+    xpath: GSTRREGISTRATIONTYPE
+  state:
+    xpath: STATENAME
+  pan:
+    xpath: INCOMEPAN
+  email:
+    xpath: EMAIL
+  phone:
+    xpath: LEDGERPHONE
+  mobile:
+    xpath: LEDGERMOBILE
+  pincode:
+    xpath: PINCODE

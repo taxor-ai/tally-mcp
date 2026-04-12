@@ -18,7 +18,7 @@
                         <FETCH>NAME, PARENT, $ISAGGREGATE, $RESERVEDNAME, PARTYGSTIN, GSTRREGISTRATIONTYPE, STATENAME, INCOMEPAN, EMAIL, LEDGERPHONE, LEDGERMOBILE, ADDRESS, PINCODE, MAILINGNAME.LIST, ADDRESS.LIST</FETCH>
                         <FILTER>ByName</FILTER>
                     </COLLECTION>
-                    <SYSTEM TYPE="Formula" NAME="ByName">($NAME = "{{ name | e }}")</SYSTEM>
+                    <SYSTEM TYPE="Formula" NAME="ByName">($NAME = "{{ ledger_name | e }}")</SYSTEM>
                 </TDLMESSAGE>
             </TDL>
         </DESC>

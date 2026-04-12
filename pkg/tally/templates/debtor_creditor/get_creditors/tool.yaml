@@ -1,0 +1,7 @@
+name: get_creditors
+description: List all creditor ledgers (Sundry Creditors) with balances
+implicit_params:
+  - company_name
+input_schema:
+  properties: {}
+  required: []

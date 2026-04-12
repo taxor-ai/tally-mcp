@@ -1,0 +1,8 @@
+type: list
+items_xpath: //COLLECTION/COMPANY
+result_key: companies
+fields:
+  name:
+    xpath: "@NAME"
+  guid:
+    xpath: GUID

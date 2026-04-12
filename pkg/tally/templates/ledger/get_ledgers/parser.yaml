@@ -1,0 +1,8 @@
+type: list
+items_xpath: //COLLECTION/LEDGER
+result_key: ledgers
+fields:
+  name:
+    xpath: "@NAME"
+  parent:
+    xpath: PARENT

@@ -14,8 +14,7 @@
       "env": {
         "TALLY_HOST": "${user_config.tally_host}",
         "TALLY_PORT": "${user_config.tally_port}",
-        "TALLY_COMPANY": "${user_config.tally_company}",
-        "TALLY_LOG_LEVEL": "debug"
+        "TALLY_COMPANY": "${user_config.tally_company}"
       }
     }
   },

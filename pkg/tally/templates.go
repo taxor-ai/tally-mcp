@@ -1,31 +1,39 @@
 package tally
 
 import (
-	"embed"
 	"fmt"
+	"os"
 	"strings"
 )
 
-//go:embed templates/*/*.xml
-var templatesFS embed.FS
+// RenderTemplate fills {{ key | e }} and {{key}} placeholders in a template string.
+func RenderTemplate(templateStr string, params map[string]string) string {
+	result := templateStr
+	for key, value := range params {
+		result = strings.ReplaceAll(result, fmt.Sprintf("{{ %s | e }}", key), value)
+		result = strings.ReplaceAll(result, fmt.Sprintf("{{%s}}", key), value)
+	}
+	return result
+}
 
-// LoadTemplate loads and parameterizes an XML template
+// LoadTemplate loads and parameterizes an XML template from the templates directory
 func LoadTemplate(templatePath string, params map[string]string) (string, error) {
-	data, err := templatesFS.ReadFile(fmt.Sprintf("templates/%s.xml", templatePath))
+	// Load from templates/{category}/{toolname}/request.xml
+	// Example: "ledger/create_ledger" -> "templates/ledger/create_ledger/request.xml"
+	fullPath := fmt.Sprintf("templates/%s/request.xml", templatePath)
+	data, err := readFile(fullPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to load template %s: %w", templatePath, err)
 	}
+	return RenderTemplate(string(data), params), nil
+}
 
-	xml := string(data)
-	for key, value := range params {
-		// Handle Jinja2-style placeholders with filters: {{ name | e }}
-		placeholder := fmt.Sprintf("{{ %s | e }}", key)
-		xml = strings.ReplaceAll(xml, placeholder, value)
+// readFile is a simple wrapper for os.ReadFile (can be swapped for embed.FS if needed)
+func readFile(path string) ([]byte, error) {
+	return readFileOS(path)
+}
 
-		// Also handle simple placeholders: {{name}}
-		simplePlaceholder := fmt.Sprintf("{{%s}}", key)
-		xml = strings.ReplaceAll(xml, simplePlaceholder, value)
-	}
-
-	return xml, nil
+// readFileOS reads from the filesystem
+func readFileOS(path string) ([]byte, error) {
+	return os.ReadFile(path)
 }

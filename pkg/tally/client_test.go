@@ -41,12 +41,10 @@ func TestParseCompaniesResponse(t *testing.T) {
 	<BODY>
 		<DATA>
 			<COLLECTION>
-				<COMPANY>
-					<NAME>ABC Corporation</NAME>
+				<COMPANY NAME="ABC Corporation">
 					<GUID>guid-abc-001</GUID>
 				</COMPANY>
-				<COMPANY>
-					<NAME>XYZ Traders</NAME>
+				<COMPANY NAME="XYZ Traders">
 					<GUID>guid-xyz-002</GUID>
 				</COMPANY>
 			</COLLECTION>
@@ -54,25 +52,40 @@ func TestParseCompaniesResponse(t *testing.T) {
 	</BODY>
 </ENVELOPE>`)
 
-	companies, err := ParseCompaniesResponse(xmlResponse)
+	spec := ParserSpec{
+		Type:       "list",
+		ItemsXPath: "//COLLECTION/COMPANY",
+		ResultKey:  "companies",
+		Fields: map[string]FieldSpec{
+			"name": {XPath: "@NAME"},
+			"guid": {XPath: "GUID"},
+		},
+	}
+
+	result, err := ParseResponse(xmlResponse, spec)
 	if err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	companies, ok := result["companies"].([]map[string]interface{})
+	if !ok {
+		t.Fatalf("expected []map[string]interface{}, got %T", result["companies"])
 	}
 
 	if len(companies) != 2 {
 		t.Errorf("Expected 2 companies, got %d", len(companies))
 	}
 
-	if companies[0].Name != "ABC Corporation" {
-		t.Errorf("Expected first company name 'ABC Corporation', got '%s'", companies[0].Name)
+	if companies[0]["name"] != "ABC Corporation" {
+		t.Errorf("Expected first company name 'ABC Corporation', got '%s'", companies[0]["name"])
 	}
 
-	if companies[0].GUID != "guid-abc-001" {
-		t.Errorf("Expected first company GUID 'guid-abc-001', got '%s'", companies[0].GUID)
+	if companies[0]["guid"] != "guid-abc-001" {
+		t.Errorf("Expected first company GUID 'guid-abc-001', got '%s'", companies[0]["guid"])
 	}
 
-	if companies[1].Name != "XYZ Traders" {
-		t.Errorf("Expected second company name 'XYZ Traders', got '%s'", companies[1].Name)
+	if companies[1]["name"] != "XYZ Traders" {
+		t.Errorf("Expected second company name 'XYZ Traders', got '%s'", companies[1]["name"])
 	}
 }
 
@@ -88,9 +101,24 @@ func TestParseCompaniesResponseEmptyList(t *testing.T) {
 	</BODY>
 </ENVELOPE>`)
 
-	companies, err := ParseCompaniesResponse(xmlResponse)
+	spec := ParserSpec{
+		Type:       "list",
+		ItemsXPath: "//COLLECTION/COMPANY",
+		ResultKey:  "companies",
+		Fields: map[string]FieldSpec{
+			"name": {XPath: "@NAME"},
+			"guid": {XPath: "GUID"},
+		},
+	}
+
+	result, err := ParseResponse(xmlResponse, spec)
 	if err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	companies, ok := result["companies"].([]map[string]interface{})
+	if !ok {
+		t.Fatalf("expected []map[string]interface{}, got %T", result["companies"])
 	}
 
 	if len(companies) != 0 {
@@ -101,7 +129,17 @@ func TestParseCompaniesResponseEmptyList(t *testing.T) {
 func TestParseCompaniesResponseInvalidXML(t *testing.T) {
 	invalidXML := []byte(`not valid xml`)
 
-	_, err := ParseCompaniesResponse(invalidXML)
+	spec := ParserSpec{
+		Type:       "list",
+		ItemsXPath: "//COLLECTION/COMPANY",
+		ResultKey:  "companies",
+		Fields: map[string]FieldSpec{
+			"name": {XPath: "@NAME"},
+			"guid": {XPath: "GUID"},
+		},
+	}
+
+	_, err := ParseResponse(invalidXML, spec)
 	if err == nil {
 		t.Fatal("Expected error for invalid XML")
 	}

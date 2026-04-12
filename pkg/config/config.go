@@ -39,7 +39,7 @@ func Load() (*Config, error) {
 	// Parse port
 	portStr := os.Getenv("TALLY_PORT")
 	if portStr == "" {
-		portStr = "9900"
+		return nil, fmt.Errorf("TALLY_PORT environment variable is required")
 	}
 	port, err := strconv.Atoi(portStr)
 	if err != nil {

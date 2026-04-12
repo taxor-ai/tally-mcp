@@ -4,8 +4,25 @@ import (
 	"os"
 	"testing"
 
+	"github.com/taxor-ai/tally-mcp/pkg/logger"
 	"github.com/taxor-ai/tally-mcp/pkg/tally"
 )
+
+// findTemplatesDir finds the templates directory from expected paths
+func findTemplatesDir(t *testing.T) string {
+	candidates := []string{
+		"pkg/tally/templates",
+		"../../pkg/tally/templates",
+		"../../../pkg/tally/templates",
+	}
+	for _, candidate := range candidates {
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+	}
+	t.Fatal("Could not find pkg/tally/templates from any expected path")
+	return ""
+}
 
 func TestHandleGetCompanies(t *testing.T) {
 	// Skip if Tally is not available
@@ -17,7 +34,16 @@ func TestHandleGetCompanies(t *testing.T) {
 	company := os.Getenv("TALLY_COMPANY")
 	client := tally.NewClient(host, 9900, 30)
 	client.SetCompany(company)
-	handler := NewHandler(client, nil)
+
+	log, _ := logger.New("warn", "")
+	templatesDir := findTemplatesDir(t)
+	os.Setenv("TALLY_TEMPLATES_DIR", templatesDir)
+	defer os.Unsetenv("TALLY_TEMPLATES_DIR")
+	registry, err := tally.LoadRegistry(templatesDir)
+	if err != nil {
+		t.Fatalf("LoadRegistry failed: %v", err)
+	}
+	handler := NewHandler(client, registry, log)
 
 	result, err := handler.HandleToolCall("get_companies", map[string]interface{}{})
 
@@ -43,11 +69,19 @@ func TestHandleGetCompanies(t *testing.T) {
 
 func TestUnknownTool(t *testing.T) {
 	client := tally.NewClient("localhost", 9900, 30)
-	handler := NewHandler(client, nil)
+	log, _ := logger.New("warn", "")
+	templatesDir := findTemplatesDir(t)
+	os.Setenv("TALLY_TEMPLATES_DIR", templatesDir)
+	defer os.Unsetenv("TALLY_TEMPLATES_DIR")
+	registry, err := tally.LoadRegistry(templatesDir)
+	if err != nil {
+		t.Fatalf("LoadRegistry failed: %v", err)
+	}
+	handler := NewHandler(client, registry, log)
 
-	_, err := handler.HandleToolCall("unknown_tool", map[string]interface{}{})
+	_, err2 := handler.HandleToolCall("unknown_tool", map[string]interface{}{})
 
-	if err == nil {
+	if err2 == nil {
 		t.Error("Expected error for unknown tool")
 	}
 }

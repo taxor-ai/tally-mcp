@@ -1,0 +1,10 @@
+name: get_ledger_details
+description: Get detailed information for a specific ledger including GST and contact details
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    ledger_name:
+      type: string
+      description: Name of the ledger to query
+  required: [ledger_name]

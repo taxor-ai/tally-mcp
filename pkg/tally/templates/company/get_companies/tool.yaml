@@ -1,0 +1,6 @@
+name: get_companies
+description: List all companies available in Tally
+implicit_params: []
+input_schema:
+  properties: {}
+  required: []

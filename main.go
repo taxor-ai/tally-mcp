@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/taxor-ai/tally-mcp/pkg/config"
 	"github.com/taxor-ai/tally-mcp/pkg/logger"
@@ -57,8 +58,23 @@ func main() {
 	client := tally.NewClient(cfg.Tally.Host, cfg.Tally.Port, 30)
 	client.SetCompany(cfg.Tally.Company)
 
-	// Create MCP handler
-	handler := mcp.NewHandler(client, log)
+	// Load tool registry from templates directory
+	// Templates are located next to the binary: {binary_dir}/templates
+	exePath, err := os.Executable()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error determining executable path: %v\n", err)
+		os.Exit(1)
+	}
+	exeDir := filepath.Dir(exePath)
+	templatesDir := filepath.Join(exeDir, "templates")
+
+	registry, err := tally.LoadRegistry(templatesDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading tool registry: %v\n", err)
+		os.Exit(1)
+	}
+	log.Infof("Tool registry loaded from %s with %d tools", templatesDir, len(registry.All()))
+	handler := mcp.NewHandler(client, registry, log)
 
 	// Process requests from stdin
 	reader := bufio.NewReader(os.Stdin)
@@ -196,7 +212,7 @@ func handleInitialize(req MCPRequest, log *logger.Logger) {
 func handleToolsList(req MCPRequest, handler *mcp.Handler, log *logger.Logger) {
 	log.Debugf("Listing available tools")
 
-	tools := mcp.AllTools()
+	tools := handler.ListTools()
 
 	response := MCPResponse{
 		JSONRPC: "2.0",

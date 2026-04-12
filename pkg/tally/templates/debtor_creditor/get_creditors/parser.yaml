@@ -1,0 +1,18 @@
+type: list
+items_xpath: //COLLECTION/LEDGER
+result_key: creditors
+fields:
+  name:
+    xpath: "@NAME"
+  parent:
+    xpath: PARENT
+  closing_balance:
+    xpath: CLOSINGBALANCE
+    transform: number
+  credit_limit:
+    xpath: CREDITLIMIT
+    transform: number
+  state:
+    xpath: STATENAME
+  email:
+    xpath: EMAIL
