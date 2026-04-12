@@ -25,3 +25,17 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+config.local.yaml
+config.local.yml
+
+# Test artifacts
+coverage.out
+*.test
