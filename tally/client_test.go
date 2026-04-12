@@ -25,3 +25,84 @@ func TestBuildRPCURL(t *testing.T) {
 		t.Errorf("Expected URL '%s', got '%s'", expected, url)
 	}
 }
+
+func TestSetCompany(t *testing.T) {
+	client := NewClient("localhost", 9900, 30)
+	client.SetCompany("TestCompany")
+	if client.Company != "TestCompany" {
+		t.Errorf("Expected company 'TestCompany', got '%s'", client.Company)
+	}
+}
+
+func TestParseCompaniesResponse(t *testing.T) {
+	// Sample XML response from Tally (matching actual structure)
+	xmlResponse := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<ENVELOPE>
+	<BODY>
+		<DATA>
+			<COLLECTION>
+				<COMPANY>
+					<NAME>ABC Corporation</NAME>
+					<GUID>guid-abc-001</GUID>
+				</COMPANY>
+				<COMPANY>
+					<NAME>XYZ Traders</NAME>
+					<GUID>guid-xyz-002</GUID>
+				</COMPANY>
+			</COLLECTION>
+		</DATA>
+	</BODY>
+</ENVELOPE>`)
+
+	companies, err := ParseCompaniesResponse(xmlResponse)
+	if err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	if len(companies) != 2 {
+		t.Errorf("Expected 2 companies, got %d", len(companies))
+	}
+
+	if companies[0].Name != "ABC Corporation" {
+		t.Errorf("Expected first company name 'ABC Corporation', got '%s'", companies[0].Name)
+	}
+
+	if companies[0].GUID != "guid-abc-001" {
+		t.Errorf("Expected first company GUID 'guid-abc-001', got '%s'", companies[0].GUID)
+	}
+
+	if companies[1].Name != "XYZ Traders" {
+		t.Errorf("Expected second company name 'XYZ Traders', got '%s'", companies[1].Name)
+	}
+}
+
+func TestParseCompaniesResponseEmptyList(t *testing.T) {
+	// XML response with no companies (matching actual Tally structure)
+	xmlResponse := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<ENVELOPE>
+	<BODY>
+		<DATA>
+			<COLLECTION>
+			</COLLECTION>
+		</DATA>
+	</BODY>
+</ENVELOPE>`)
+
+	companies, err := ParseCompaniesResponse(xmlResponse)
+	if err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	if len(companies) != 0 {
+		t.Errorf("Expected 0 companies, got %d", len(companies))
+	}
+}
+
+func TestParseCompaniesResponseInvalidXML(t *testing.T) {
+	invalidXML := []byte(`not valid xml`)
+
+	_, err := ParseCompaniesResponse(invalidXML)
+	if err == nil {
+		t.Fatal("Expected error for invalid XML")
+	}
+}

@@ -37,19 +37,22 @@ func (h *Handler) handleGetCompanies() (interface{}, error) {
 		h.log.Info("get_companies called")
 	}
 
-	// Load and execute the template
-	_, err := tally.LoadTemplate("company/get_companies", map[string]string{})
+	// Execute the template against Tally
+	xmlResponse, err := h.client.ExecuteTemplate("company/get_companies", map[string]string{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to load template: %w", err)
+		if h.log != nil {
+			h.log.Warn("get_companies failed", "error", err.Error())
+		}
+		return nil, fmt.Errorf("failed to execute template: %w", err)
 	}
 
-	// In a real implementation, we'd call Tally via XML-RPC here
-	// For now, return a mock response for validation
-	// TODO: Implement actual Tally XML-RPC call
-
-	// Parse response and extract companies
-	companies := []tally.Company{
-		{Name: "DemoCompany", GUID: "comp001"},
+	// Parse the XML response
+	companies, err := tally.ParseCompaniesResponse(xmlResponse)
+	if err != nil {
+		if h.log != nil {
+			h.log.Warn("failed to parse companies response", "error", err.Error())
+		}
+		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	response := map[string]interface{}{

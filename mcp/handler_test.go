@@ -1,13 +1,22 @@
 package mcp
 
 import (
+	"os"
 	"testing"
 
 	"github.com/taxor-ai/tally-mcp/tally"
 )
 
 func TestHandleGetCompanies(t *testing.T) {
-	client := tally.NewClient("localhost", 9900, 30)
+	// Skip if Tally is not available
+	if os.Getenv("TALLY_HOST") == "" {
+		t.Skip("TALLY_HOST not set, skipping test that requires Tally")
+	}
+
+	host := os.Getenv("TALLY_HOST")
+	company := os.Getenv("TALLY_COMPANY")
+	client := tally.NewClient(host, 9900, 30)
+	client.SetCompany(company)
 	handler := NewHandler(client, nil)
 
 	result, err := handler.HandleToolCall("get_companies", map[string]interface{}{})
