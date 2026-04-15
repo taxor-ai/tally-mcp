@@ -1,0 +1,14 @@
+type: list
+items_xpath: //COLLECTION/VOUCHER
+result_key: vouchers
+fields:
+  voucher_number:
+    xpath: VOUCHERNUMBER
+  date:
+    xpath: DATE
+  reference:
+    xpath: REFERENCE
+  narration:
+    xpath: NARRATION
+  ledger_entries:
+    xpath: ALLLEDGERENTRIES.LIST
