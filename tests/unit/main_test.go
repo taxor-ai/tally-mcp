@@ -446,3 +446,97 @@ func writeResponseToBuffer(resp MCPResponse, buf *bytes.Buffer) error {
 	_, err = buf.WriteString(string(data))
 	return err
 }
+
+// TestNewToolsDiscovery verifies that the new voucher tools are discoverable
+func TestNewToolsDiscovery(t *testing.T) {
+	setupTemplatesDir(t)
+
+	// Load registry
+	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	if err != nil {
+		t.Fatalf("Failed to load registry: %v", err)
+	}
+
+	// Expected new tools
+	expectedTools := []string{
+		"get_debtor_vouchers",
+		"create_journal_voucher",
+		"create_sales_voucher",
+	}
+
+	// Get all tools from registry
+	allTools := registry.All()
+	toolNames := make(map[string]bool)
+	for _, tool := range allTools {
+		toolNames[tool.Name] = true
+	}
+
+	// Verify each expected tool exists
+	for _, toolName := range expectedTools {
+		if !toolNames[toolName] {
+			t.Errorf("Expected tool %q not found in registry", toolName)
+		}
+	}
+
+	// Verify we have at least the new tools (plus existing ones)
+	if len(allTools) < len(expectedTools) {
+		t.Errorf("Expected at least %d tools, got %d", len(expectedTools), len(allTools))
+	}
+
+	t.Logf("✓ All new tools discovered: %v", expectedTools)
+}
+
+// TestNewToolsSchemas verifies that new tools have correct input schemas
+func TestNewToolsSchemas(t *testing.T) {
+	setupTemplatesDir(t)
+
+	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	if err != nil {
+		t.Fatalf("Failed to load registry: %v", err)
+	}
+
+	testCases := []struct {
+		toolName       string
+		requiredFields []string
+	}{
+		{
+			toolName:       "get_debtor_vouchers",
+			requiredFields: []string{"debtor_ledger_name", "start_date", "end_date"},
+		},
+		{
+			toolName:       "create_journal_voucher",
+			requiredFields: []string{"date", "reference", "narration", "lines"},
+		},
+		{
+			toolName:       "create_sales_voucher",
+			requiredFields: []string{"date", "reference", "narration", "debtor_ledger_name", "lines"},
+		},
+	}
+
+	for _, tc := range testCases {
+		tool := registry.Get(tc.toolName)
+		if tool == nil {
+			t.Errorf("Tool %q not found", tc.toolName)
+			continue
+		}
+
+		// Verify required fields exist in schema
+		for _, field := range tc.requiredFields {
+			if !containsString(tool.InputSchema.Required, field) {
+				t.Errorf("Tool %q missing required field %q", tc.toolName, field)
+			}
+		}
+
+		t.Logf("✓ Tool %q has correct schema", tc.toolName)
+	}
+}
+
+// Helper function
+func containsString(slice []string, item string) bool {
+	for _, v := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}

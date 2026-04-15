@@ -22,10 +22,13 @@ Built with Go for cross-platform support (macOS, Linux, Windows).
 - `get_ledger_details` - Get detailed information for a specific ledger
 - `get_debtors` - List all debtor ledgers with outstanding amounts
 - `get_creditors` - List all creditor ledgers with outstanding amounts
+- `get_creditor_vouchers` - Fetch past vouchers (transactions) for a specific creditor
+- `get_debtor_vouchers` - Fetch past sales vouchers for a specific debtor/customer
 
 ✅ **Write Operations**
 - `create_ledger` - Create a new ledger account
-- `create_voucher` - Create invoices, payments, and expense entries
+- `create_journal_voucher` - Create journal vouchers with multiple ledger entries (expense tracking)
+- `create_sales_voucher` - Create sales vouchers (customer invoices)
 
 ✅ **Cross-Platform**
 - macOS (Apple Silicon & Intel)

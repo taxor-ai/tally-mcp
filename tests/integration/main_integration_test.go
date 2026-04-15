@@ -165,7 +165,7 @@ func TestRegistryHasAllExpectedTools(t *testing.T) {
 	}
 	expected := []string{
 		"get_companies", "get_ledgers", "get_ledger_details",
-		"create_ledger", "get_debtors", "get_creditors",
+		"create_ledger", "get_debtors", "get_creditors", "get_creditor_vouchers",
 	}
 	for _, name := range expected {
 		if registry.Get(name) == nil {
@@ -197,5 +197,51 @@ func TestAllGetToolsSequenceIntegration(t *testing.T) {
 		m := result.(map[string]interface{})
 		items := m[tc.key].([]map[string]interface{})
 		t.Logf("✓ %s: %d items", tc.name, len(items))
+	}
+}
+
+func TestGetCreditorVouchersIntegration(t *testing.T) {
+	handler := setupHandler(t)
+
+	// First get creditors to find one to test with
+	credResult, err := handler.HandleToolCall("get_creditors", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("get_creditors failed: %v", err)
+	}
+	credMap := credResult.(map[string]interface{})
+	creditors := credMap["creditors"].([]map[string]interface{})
+	if len(creditors) == 0 {
+		t.Skip("No creditors found in Tally — skipping test")
+	}
+
+	// Use the first creditor
+	creditorName := creditors[0]["name"].(string)
+	t.Logf("Testing with creditor: %s", creditorName)
+
+	// Test get_creditor_vouchers with date range
+	// Using a small date range to avoid memory issues
+	params := map[string]interface{}{
+		"creditor_ledger_name": creditorName,
+		"start_date":           "20260401",
+		"end_date":             "20260430",
+	}
+
+	result, err := handler.HandleToolCall("get_creditor_vouchers", params)
+	if err != nil {
+		t.Fatalf("get_creditor_vouchers failed: %v", err)
+	}
+
+	m := result.(map[string]interface{})
+	vouchers, ok := m["vouchers"].([]map[string]interface{})
+	if !ok {
+		t.Fatalf("expected vouchers array in response, got %T", m["vouchers"])
+	}
+
+	t.Logf("✓ get_creditor_vouchers for %q: %d vouchers", creditorName, len(vouchers))
+	for i, v := range vouchers {
+		if i >= 3 {
+			break
+		}
+		t.Logf("  Voucher %d: number=%v date=%v reference=%v", i+1, v["voucher_number"], v["date"], v["reference"])
 	}
 }

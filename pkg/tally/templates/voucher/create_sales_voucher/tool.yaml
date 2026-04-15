@@ -1,0 +1,53 @@
+name: create_sales_voucher
+description: Create a sales voucher (customer invoice) with line items
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    date:
+      type: string
+      description: Invoice date in YYYYMMDD format
+    reference:
+      type: string
+      description: Invoice/reference number
+    narration:
+      type: string
+      description: Invoice description
+    debtor_ledger_name:
+      type: string
+      description: Customer/debtor ledger name (for tracking against customer account)
+    lines:
+      type: array
+      description: Array of line items (sales ledger entries)
+      items:
+        type: object
+        properties:
+          ledger_name:
+            type: string
+            description: Sales account name (e.g., "Sales", "Product A Sales")
+          entry_type:
+            type: string
+            enum: [debit, credit]
+            description: Debit or credit entry
+          amount:
+            type: number
+            description: Line item amount
+          bill_allocations:
+            type: array
+            description: Optional bill allocations (can be empty or omitted)
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                amount:
+                  type: number
+        required: [ledger_name, entry_type, amount]
+  required:
+    - date
+    - reference
+    - narration
+    - debtor_ledger_name
+    - lines

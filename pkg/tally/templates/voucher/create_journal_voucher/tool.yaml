@@ -1,0 +1,52 @@
+name: create_journal_voucher
+description: Create a journal voucher with multiple ledger line entries
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    date:
+      type: string
+      description: Voucher date in YYYYMMDD format
+    reference:
+      type: string
+      description: Reference number/invoice number for tracking
+    narration:
+      type: string
+      description: Description of the transaction
+    lines:
+      type: array
+      description: Array of ledger entries (debit/credit lines)
+      items:
+        type: object
+        properties:
+          ledger_name:
+            type: string
+            description: Name of the ledger account (e.g., "Office Rent", "Travel Expense")
+          entry_type:
+            type: string
+            enum: [debit, credit]
+            description: Debit or credit entry
+          amount:
+            type: number
+            description: Amount in absolute value (entry_type determines sign)
+          bill_allocations:
+            type: array
+            description: Optional bill allocations (can be empty or omitted)
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Bill/reference name
+                type:
+                  type: string
+                  description: Bill type (e.g., "Bill Reference")
+                amount:
+                  type: number
+                  description: Allocated amount
+        required: [ledger_name, entry_type, amount]
+  required:
+    - date
+    - reference
+    - narration
+    - lines

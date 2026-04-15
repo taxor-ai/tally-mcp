@@ -1,0 +1,19 @@
+name: get_creditor_vouchers
+description: Fetch all vouchers (past transactions) for a specific creditor within a date range
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    creditor_ledger_name:
+      type: string
+      description: Name of the creditor ledger to filter by (e.g., "ABC Suppliers")
+    start_date:
+      type: string
+      description: Start date for voucher range in YYYYMMDD format
+    end_date:
+      type: string
+      description: End date for voucher range in YYYYMMDD format
+  required:
+    - creditor_ledger_name
+    - start_date
+    - end_date
