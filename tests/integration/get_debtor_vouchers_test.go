@@ -31,7 +31,12 @@ func TestGetDebtorVouchers(t *testing.T) {
 		if voucherType != "Sales" {
 			t.Errorf("voucher %d: expected type=Sales, got %q", i+1, voucherType)
 		}
-		t.Logf("  Voucher %d: number=%v date=%v type=%v", i+1, v["voucher_number"], v["date"], voucherType)
+		t.Logf("  Voucher %d: number=%v date=%v type=%v narration=%v", i+1, v["voucher_number"], v["date"], voucherType, v["narration"])
+		if entries, ok := v["ledger_entries"].([]map[string]interface{}); ok {
+			for _, e := range entries {
+				t.Logf("    ledger=%v debit_credit=%v amount=%v", e["ledger_name"], e["debit_credit"], e["amount"])
+			}
+		}
 	}
 	t.Logf("✓ get_debtor_vouchers (TestStore): %d Sales vouchers", len(vouchers))
 }

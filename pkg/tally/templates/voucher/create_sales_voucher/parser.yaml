@@ -1,8 +1,1 @@
-type: single
-fields:
-  success:
-    xpath: /RESPONSE/STATUS
-    transform: string
-  message:
-    xpath: /RESPONSE/ERRORS/ERROR
-    transform: string
+type: import_result

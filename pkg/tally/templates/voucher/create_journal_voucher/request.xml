@@ -8,33 +8,33 @@
     <BODY>
         <DESC>
             <STATICVARIABLES>
-                <SVCURRENTCOMPANY>{{ company_name | e }}</SVCURRENTCOMPANY>
+                <SVCURRENTCOMPANY>{{ e .company_name }}</SVCURRENTCOMPANY>
             </STATICVARIABLES>
         </DESC>
         <DATA>
             <TALLYMESSAGE xmlns:UDF="TallyUDF">
                 <VOUCHER VCHTYPE="Journal" ACTION="Create" OBJVIEW="Accounting Voucher View">
-                    <DATE>{{ date }}</DATE>
+                    <DATE>{{ .date }}</DATE>
                     <VOUCHERTYPENAME>Journal</VOUCHERTYPENAME>
-                    <REFERENCE>{{ reference | e }}</REFERENCE>
-                    <NARRATION>{{ narration | e }}</NARRATION>
+                    <REFERENCE>{{ e .reference }}</REFERENCE>
+                    <NARRATION>{{ e .narration }}</NARRATION>
 
-                    {% for line in lines %}
+                    {{ range .lines }}
                     <ALLLEDGERENTRIES.LIST>
-                        <LEDGERNAME>{{ line.ledger_name | e }}</LEDGERNAME>
-                        <ISDEEMEDPOSITIVE>{{ "Yes" if line.entry_type == "debit" else "No" }}</ISDEEMEDPOSITIVE>
-                        <AMOUNT>{{ line.amount }}</AMOUNT>
-                        {% if line.bill_allocations %}
-                        {% for bill in line.bill_allocations %}
+                        <LEDGERNAME>{{ e .ledger_name }}</LEDGERNAME>
+                        <ISDEEMEDPOSITIVE>{{ if eq .entry_type "debit" }}Yes{{ else }}No{{ end }}</ISDEEMEDPOSITIVE>
+                        <AMOUNT>{{ if eq .entry_type "debit" }}-{{ .amount }}{{ else }}{{ .amount }}{{ end }}</AMOUNT>
+                        {{ if .bill_allocations }}
+                        {{ range .bill_allocations }}
                         <BILLALLOCATIONS.LIST>
-                            <NAME>{{ bill.name | e }}</NAME>
-                            <BILLTYPE>{{ bill.type | e }}</BILLTYPE>
-                            <AMOUNT>{{ bill.amount }}</AMOUNT>
+                            <NAME>{{ e .name }}</NAME>
+                            <BILLTYPE>{{ e .type }}</BILLTYPE>
+                            <AMOUNT>{{ .amount }}</AMOUNT>
                         </BILLALLOCATIONS.LIST>
-                        {% endfor %}
-                        {% endif %}
+                        {{ end }}
+                        {{ end }}
                     </ALLLEDGERENTRIES.LIST>
-                    {% endfor %}
+                    {{ end }}
                 </VOUCHER>
             </TALLYMESSAGE>
         </DATA>

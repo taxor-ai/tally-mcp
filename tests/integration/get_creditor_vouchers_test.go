@@ -37,6 +37,11 @@ func TestGetCreditorVouchers(t *testing.T) {
 		if i >= 3 {
 			break
 		}
-		t.Logf("  Voucher %d: number=%v date=%v reference=%v", i+1, v["voucher_number"], v["date"], v["reference"])
+		t.Logf("  Voucher %d: number=%v date=%v reference=%v narration=%v", i+1, v["voucher_number"], v["date"], v["reference"], v["narration"])
+		if entries, ok := v["ledger_entries"].([]map[string]interface{}); ok {
+			for _, e := range entries {
+				t.Logf("    ledger=%v debit_credit=%v amount=%v", e["ledger_name"], e["debit_credit"], e["amount"])
+			}
+		}
 	}
 }
