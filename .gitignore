@@ -24,7 +24,8 @@ Thumbs.db
 
 # Build artifacts
 dist/
-build/
+build/*
+!build/claude_extension.sh
 
 # Environment and secrets
 .env
