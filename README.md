@@ -266,29 +266,82 @@ go test ./...
 
 # With coverage
 go test -cover ./...
+
+# Or use make target
+make test-unit
 ```
 
 **Integration Tests** (requires live Tally instance)
+
+> **Note:** Integration tests use configuration from `.env.test` file—no command-line arguments needed!
+
+#### 1. Setup Configuration (One-time)
+
 ```bash
-# Test against real Tally server
-TALLY_HOST=localhost TALLY_PORT=9000 TALLY_COMPANY="Your Company" \
+# Copy the example configuration file
+cp .env.test.example .env.test
+
+# Edit .env.test with your Tally server connection details
+nano .env.test
+```
+
+Example `.env.test` content:
+```env
+TALLY_HOST=your-tally-server.com
+TALLY_PORT=9000
+TALLY_COMPANY=Your Company Name
+TALLY_LOG_LEVEL=info
+```
+
+#### 2. Run Integration Tests
+
+```bash
+# Run all integration tests (recommended)
+make test-integration
+
+# Or run directly with go test
 go test -tags=integration -v ./tests/integration/...
 
 # Run specific test
-TALLY_HOST=localhost TALLY_PORT=9000 TALLY_COMPANY="Your Company" \
-go test -tags=integration -run TestGetLedgersIntegration -v ./tests/integration/...
+go test -tags=integration -run TestListAllCreditors -v ./tests/integration/...
 
-# Test all GET commands in sequence
-TALLY_HOST=localhost TALLY_PORT=9000 TALLY_COMPANY="Your Company" \
-go test -tags=integration -run TestAllGetToolsSequenceIntegration -v ./tests/integration/...
+# Run multiple specific tests
+go test -tags=integration -run "TestGet.*Integration" -v ./tests/integration/...
 ```
 
-**Available Integration Tests:**
-- `TestGetCompaniesRealTally` - Verify company retrieval
-- `TestGetLedgersIntegration` - Verify ledger retrieval
-- `TestGetDebtorsIntegration` - Verify debtor retrieval
-- `TestGetCreditorsIntegration` - Verify creditor retrieval
-- `TestAllGetToolsSequenceIntegration` - Comprehensive test of all GET tools
+#### Available Integration Tests
+
+**Read Operations (Query Tally Data):**
+- `TestGetCompaniesIntegration` - List all companies in Tally
+- `TestGetLedgersIntegration` - Retrieve all ledgers
+- `TestGetDebtorsIntegration` - Get debtor (customer) list
+- `TestGetCreditorsIntegration` - Get creditor (vendor) list
+- `TestListAllCreditors` - Detailed creditor list with full details
+- `TestGetCreditorVouchersIntegration` - Fetch vendor transactions
+- `TestGetDebtorVouchersIntegration` - Fetch customer transactions
+- `TestRegistryHasAllExpectedTools` - Verify all tools are available
+- `TestAllGetToolsSequenceIntegration` - Run all GET tools in sequence
+
+**Write Operations (Create Records):**
+- `TestCreateJournalVoucherIntegration` - Create a journal entry
+- `TestCreateSalesVoucherIntegration` - Create a sales invoice
+
+#### Configuration Priority
+
+The config loader checks in this order (first found wins):
+1. **Environment variables** (highest priority—useful for CI/CD)
+2. `.env.local` (local development overrides)
+3. `.env.test` (integration test configuration)
+4. `.env` (default configuration)
+
+**Example CI/CD usage:**
+```bash
+# Override .env.test values with environment variables in CI
+TALLY_HOST=${{ secrets.TALLY_HOST }} \
+TALLY_PORT=${{ secrets.TALLY_PORT }} \
+TALLY_COMPANY=${{ secrets.TALLY_COMPANY }} \
+go test -tags=integration -v ./tests/integration/...
+```
 
 ### Adding New Tools
 

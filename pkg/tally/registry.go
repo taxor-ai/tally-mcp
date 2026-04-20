@@ -11,9 +11,13 @@ import (
 )
 
 // FieldSpec describes how to extract one field from XML via XPath.
+// For nested structures, set ItemsXPath to extract a list of items,
+// and define Fields for each nested item.
 type FieldSpec struct {
-	XPath     string `yaml:"xpath"`
-	Transform string `yaml:"transform,omitempty"` // number, integer, boolean, tally_date
+	XPath     string               `yaml:"xpath,omitempty"`
+	Transform string               `yaml:"transform,omitempty"` // number, integer, boolean, tally_date
+	ItemsXPath string              `yaml:"items_xpath,omitempty"` // for nested lists
+	Fields    map[string]FieldSpec `yaml:"fields,omitempty"` // for nested objects/lists
 }
 
 // ParserSpec describes how to parse a Tally XML response.

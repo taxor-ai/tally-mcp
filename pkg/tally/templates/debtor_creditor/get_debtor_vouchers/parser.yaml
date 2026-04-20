@@ -6,6 +6,7 @@ fields:
     xpath: VOUCHERNUMBER
   date:
     xpath: DATE
+    transform: tally_date
   reference:
     xpath: REFERENCE
   narration:
@@ -13,4 +14,23 @@ fields:
   voucher_type:
     xpath: VOUCHERTYPENAME
   ledger_entries:
-    xpath: ALLLEDGERENTRIES.LIST
+    items_xpath: ALLLEDGERENTRIES.LIST
+    fields:
+      ledger_name:
+        xpath: LEDGERNAME
+      amount:
+        xpath: AMOUNT
+        transform: number
+      debit_credit:
+        xpath: ISDEEMEDPOSITIVE
+        transform: boolean
+      date:
+        xpath: DATE
+        transform: tally_date
+      reference:
+        xpath: REFERENCE
+      invoice_number:
+        xpath: INVOICENUMBER
+      tax_amount:
+        xpath: TAXAMOUNT
+        transform: number

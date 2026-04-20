@@ -10,17 +10,16 @@
             <STATICVARIABLES>
                 <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
                 <SVCURRENTCOMPANY>{{ company_name | e }}</SVCURRENTCOMPANY>
-                <SVFROMDATE>{{ start_date }}</SVFROMDATE>
-                <SVTODATE>{{ end_date }}</SVTODATE>
             </STATICVARIABLES>
             <TDL>
                 <TDLMESSAGE>
                     <COLLECTION NAME="CreditorVouchers">
                         <TYPE>Voucher</TYPE>
                         <FETCH>DATE, VOUCHERNUMBER, REFERENCE, NARRATION, VOUCHERTYPENAME, ALLLEDGERENTRIES</FETCH>
-                        <FILTER>HasCreditor</FILTER>
+                        <FILTER>IsCreditorJournalVoucher</FILTER>
                     </COLLECTION>
-                    <SYSTEM TYPE="Formulae" NAME="HasCreditor">$PARTYLEDGERNAME = "{{ creditor_ledger_name | e }}"</SYSTEM>
+                    <SYSTEM TYPE="Formula" NAME="IsCreditorJournalVoucher">$VOUCHERTYPENAME = "Journal" AND NOT $$IsEmpty:$$FilterValue:$LEDGERNAME:ALLLEDGERENTRIES:FIRST:MatchCreditorLedger</SYSTEM>
+                    <SYSTEM TYPE="Formula" NAME="MatchCreditorLedger">$LEDGERNAME = "{{ creditor_ledger_name | e }}"</SYSTEM>
                 </TDLMESSAGE>
             </TDL>
         </DESC>

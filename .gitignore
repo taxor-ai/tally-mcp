@@ -29,6 +29,7 @@ build/
 # Environment and secrets
 .env
 .env.local
+.env.test
 .env.*.local
 *.pem
 *.key
@@ -39,3 +40,5 @@ config.local.yml
 # Test artifacts
 coverage.out
 *.test
+
+samples/

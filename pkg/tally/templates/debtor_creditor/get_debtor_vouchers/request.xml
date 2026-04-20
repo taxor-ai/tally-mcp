@@ -10,17 +10,16 @@
             <STATICVARIABLES>
                 <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
                 <SVCURRENTCOMPANY>{{ company_name | e }}</SVCURRENTCOMPANY>
-                <SVFROMDATE>{{ start_date | e }}</SVFROMDATE>
-                <SVTODATE>{{ end_date | e }}</SVTODATE>
             </STATICVARIABLES>
             <TDL>
                 <TDLMESSAGE>
                     <COLLECTION NAME="DebtorVouchers">
                         <TYPE>Voucher</TYPE>
                         <FETCH>DATE, VOUCHERNUMBER, REFERENCE, NARRATION, VOUCHERTYPENAME, ALLLEDGERENTRIES</FETCH>
-                        <FILTER>IsDebtorSales</FILTER>
+                        <FILTER>IsDebtorSalesVoucher</FILTER>
                     </COLLECTION>
-                    <SYSTEM TYPE="Formulae" NAME="IsDebtorSales">($PARTYLEDGERNAME = "{{ debtor_ledger_name | e }}") AND ($VOUCHERTYPENAME = "Sales")</SYSTEM>
+                    <SYSTEM TYPE="Formula" NAME="IsDebtorSalesVoucher">$VOUCHERTYPENAME = "Sales" AND NOT $$IsEmpty:$$FilterValue:$LEDGERNAME:ALLLEDGERENTRIES:FIRST:MatchDebtorLedger</SYSTEM>
+                    <SYSTEM TYPE="Formula" NAME="MatchDebtorLedger">$LEDGERNAME = "{{ debtor_ledger_name | e }}"</SYSTEM>
                 </TDLMESSAGE>
             </TDL>
         </DESC>

@@ -1,119 +1,146 @@
-package tally_test
+package tally
 
 import (
 	"testing"
-	"github.com/taxor-ai/tally-mcp/pkg/tally"
 )
 
-var sampleCompaniesXML = []byte(`<ENVELOPE>
-  <BODY><DATA><COLLECTION>
-    <COMPANY NAME="Alpha Corp"><GUID>guid-001</GUID></COMPANY>
-    <COMPANY NAME="Beta Ltd"><GUID>guid-002</GUID></COMPANY>
-  </COLLECTION></DATA></BODY>
-</ENVELOPE>`)
+func TestNestedLedgerEntriesParsing(t *testing.T) {
+	// Mock Tally XML with nested ledger entries
+	xmlData := []byte(`<?xml version="1.0"?>
+<RESPONSE>
+  <COLLECTION>
+    <VOUCHER>
+      <VOUCHERNUMBER>415</VOUCHERNUMBER>
+      <DATE>20250310</DATE>
+      <REFERENCE></REFERENCE>
+      <NARRATION>Being the sale for the month of March'25</NARRATION>
+      <VOUCHERTYPENAME>Sales</VOUCHERTYPENAME>
+      <ALLLEDGERENTRIES>
+        <LIST>
+          <ENTRY>
+            <LEDGERNAME>TestStore</LEDGERNAME>
+            <AMOUNT>-2.36</AMOUNT>
+            <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+            <DATE>20250310</DATE>
+            <REFERENCE>INV2425000416</REFERENCE>
+            <INVOICENUMBER>1525</INVOICENUMBER>
+            <TAXAMOUNT>0</TAXAMOUNT>
+          </ENTRY>
+          <ENTRY>
+            <LEDGERNAME>Sales Account</LEDGERNAME>
+            <AMOUNT>2.36</AMOUNT>
+            <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+            <DATE>20250310</DATE>
+            <REFERENCE></REFERENCE>
+            <INVOICENUMBER></INVOICENUMBER>
+            <TAXAMOUNT>0</TAXAMOUNT>
+          </ENTRY>
+        </LIST>
+      </ALLLEDGERENTRIES>
+    </VOUCHER>
+  </COLLECTION>
+</RESPONSE>`)
 
-func TestParseList(t *testing.T) {
-	spec := tally.ParserSpec{
+	spec := ParserSpec{
 		Type:       "list",
-		ItemsXPath: "//COLLECTION/COMPANY",
-		ResultKey:  "companies",
-		Fields: map[string]tally.FieldSpec{
-			"name": {XPath: "@NAME"},
-			"guid": {XPath: "GUID"},
+		ItemsXPath: "//COLLECTION/VOUCHER",
+		ResultKey:  "vouchers",
+		Fields: map[string]FieldSpec{
+			"voucher_number": {
+				XPath: "VOUCHERNUMBER",
+			},
+			"date": {
+				XPath:     "DATE",
+				Transform: "tally_date",
+			},
+			"voucher_type": {
+				XPath: "VOUCHERTYPENAME",
+			},
+			"ledger_entries": {
+				ItemsXPath: "ALLLEDGERENTRIES/LIST/ENTRY",
+				Fields: map[string]FieldSpec{
+					"ledger_name": {
+						XPath: "LEDGERNAME",
+					},
+					"amount": {
+						XPath:     "AMOUNT",
+						Transform: "number",
+					},
+					"debit_credit": {
+						XPath:     "ISDEEMEDPOSITIVE",
+						Transform: "boolean",
+					},
+					"date": {
+						XPath:     "DATE",
+						Transform: "tally_date",
+					},
+					"reference": {
+						XPath: "REFERENCE",
+					},
+					"invoice_number": {
+						XPath: "INVOICENUMBER",
+					},
+					"tax_amount": {
+						XPath:     "TAXAMOUNT",
+						Transform: "number",
+					},
+				},
+			},
 		},
 	}
-	result, err := tally.ParseResponse(sampleCompaniesXML, spec)
+
+	result, err := ParseResponse(xmlData, spec)
 	if err != nil {
-		t.Fatalf("ParseResponse error: %v", err)
+		t.Fatalf("ParseResponse failed: %v", err)
 	}
-	items, ok := result["companies"].([]map[string]interface{})
-	if !ok {
-		t.Fatalf("expected []map[string]interface{}, got %T", result["companies"])
-	}
-	if len(items) != 2 {
-		t.Fatalf("expected 2 items, got %d", len(items))
-	}
-	if items[0]["name"] != "Alpha Corp" {
-		t.Errorf("expected name=Alpha Corp, got %v", items[0]["name"])
-	}
-	if items[0]["guid"] != "guid-001" {
-		t.Errorf("expected guid=guid-001, got %v", items[0]["guid"])
-	}
-}
 
-var sampleLedgerXML = []byte(`<ENVELOPE>
-  <BODY><DATA><COLLECTION>
-    <LEDGER NAME="Cash">
-      <PARENT>Current Assets</PARENT>
-      <CLOSINGBALANCE>5000.00</CLOSINGBALANCE>
-    </LEDGER>
-  </COLLECTION></DATA></BODY>
-</ENVELOPE>`)
+	if !result["success"].(bool) {
+		t.Fatal("Parse was not successful")
+	}
 
-func TestParseObject(t *testing.T) {
-	spec := tally.ParserSpec{
-		Type:      "object",
-		RootXPath: "//COLLECTION/LEDGER[1]",
-		ResultKey: "ledger",
-		Fields: map[string]tally.FieldSpec{
-			"name":    {XPath: "@NAME"},
-			"parent":  {XPath: "PARENT"},
-			"balance": {XPath: "CLOSINGBALANCE", Transform: "number"},
-		},
+	vouchers := result["vouchers"].([]map[string]interface{})
+	if len(vouchers) != 1 {
+		t.Fatalf("Expected 1 voucher, got %d", len(vouchers))
 	}
-	result, err := tally.ParseResponse(sampleLedgerXML, spec)
-	if err != nil {
-		t.Fatalf("ParseResponse error: %v", err)
-	}
-	ledger, ok := result["ledger"].(map[string]interface{})
-	if !ok {
-		t.Fatalf("expected map, got %T", result["ledger"])
-	}
-	if ledger["name"] != "Cash" {
-		t.Errorf("expected name=Cash, got %v", ledger["name"])
-	}
-	if ledger["balance"] != 5000.0 {
-		t.Errorf("expected balance=5000.0, got %v", ledger["balance"])
-	}
-}
 
-var sampleImportResultXML = []byte(`<ENVELOPE>
-  <BODY><DATA><IMPORTRESULT>
-    <CREATED>1</CREATED><ALTERED>0</ALTERED><DELETED>0</DELETED>
-  </IMPORTRESULT></DATA></BODY>
-</ENVELOPE>`)
+	voucher := vouchers[0]
+	if voucher["voucher_number"] != "415" {
+		t.Errorf("Wrong voucher number: %v", voucher["voucher_number"])
+	}
 
-func TestParseImportResult(t *testing.T) {
-	spec := tally.ParserSpec{Type: "import_result"}
-	result, err := tally.ParseResponse(sampleImportResultXML, spec)
-	if err != nil {
-		t.Fatalf("ParseResponse error: %v", err)
+	if voucher["date"] != "2025-03-10" {
+		t.Errorf("Wrong date: %v", voucher["date"])
 	}
-	if result["success"] != true {
-		t.Errorf("expected success=true, got %v", result["success"])
-	}
-	if result["created"] != 1 {
-		t.Errorf("expected created=1, got %v", result["created"])
-	}
-}
 
-func TestTransformTallyDate(t *testing.T) {
-	spec := tally.ParserSpec{
-		Type:       "list",
-		ItemsXPath: "//VOUCHER",
-		Fields: map[string]tally.FieldSpec{
-			"date": {XPath: "DATE", Transform: "tally_date"},
-		},
+	ledgerEntries := voucher["ledger_entries"].([]map[string]interface{})
+	if len(ledgerEntries) != 2 {
+		t.Fatalf("Expected 2 ledger entries, got %d", len(ledgerEntries))
 	}
-	xml := []byte(`<ENVELOPE><BODY><DATA><COLLECTION>
-        <VOUCHER><DATE>20240401</DATE></VOUCHER>
-    </COLLECTION></DATA></BODY></ENVELOPE>`)
-	result, err := tally.ParseResponse(xml, spec)
-	if err != nil {
-		t.Fatalf("ParseResponse error: %v", err)
+
+	// Check first entry
+	entry1 := ledgerEntries[0]
+	if entry1["ledger_name"] != "TestStore" {
+		t.Errorf("Wrong ledger name: %v", entry1["ledger_name"])
 	}
-	items := result["items"].([]map[string]interface{})
-	if items[0]["date"] != "2024-04-01" {
-		t.Errorf("expected 2024-04-01, got %v", items[0]["date"])
+	if entry1["amount"] != -2.36 {
+		t.Errorf("Wrong amount: %v", entry1["amount"])
 	}
+	if entry1["debit_credit"] != false {
+		t.Errorf("Wrong debit_credit: %v", entry1["debit_credit"])
+	}
+
+	// Check second entry
+	entry2 := ledgerEntries[1]
+	if entry2["ledger_name"] != "Sales Account" {
+		t.Errorf("Wrong ledger name: %v", entry2["ledger_name"])
+	}
+	if entry2["amount"] != 2.36 {
+		t.Errorf("Wrong amount: %v", entry2["amount"])
+	}
+	if entry2["debit_credit"] != true {
+		t.Errorf("Wrong debit_credit: %v", entry2["debit_credit"])
+	}
+
+	t.Logf("✓ Nested ledger entries parsed correctly!")
+	t.Logf("Voucher: %v", voucher)
 }

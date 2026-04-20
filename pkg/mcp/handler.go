@@ -49,8 +49,8 @@ func (h *Handler) HandleToolCall(toolName string, params map[string]interface{})
 		h.log.Infof("%s called", toolName)
 	}
 
-	// Build string params map
-	templateParams := make(map[string]string, len(params)+2)
+	// Build params map with support for complex data structures
+	templateParams := make(map[string]interface{}, len(params)+2)
 
 	// Inject implicit params from client config
 	for _, implicit := range def.ImplicitParams {
@@ -60,17 +60,18 @@ func (h *Handler) HandleToolCall(toolName string, params map[string]interface{})
 		}
 	}
 
-	// Merge caller-supplied params (string values only)
+	// Merge caller-supplied params (preserve original types for complex structures)
 	for k, v := range params {
-		if s, ok := v.(string); ok {
-			templateParams[k] = s
-		} else if v != nil {
-			templateParams[k] = fmt.Sprintf("%v", v)
-		}
+		templateParams[k] = v
 	}
 
 	// Render template
 	rendered := tally.RenderTemplate(def.RequestXML, templateParams)
+
+	// Log the rendered XML being sent (use Infof for visibility)
+	if h.log != nil {
+		h.log.Infof("XML for %s:\n%s", toolName, rendered)
+	}
 
 	// POST to Tally
 	xmlResp, err := h.client.ExecuteXML(rendered)
@@ -79,6 +80,11 @@ func (h *Handler) HandleToolCall(toolName string, params map[string]interface{})
 			h.log.Warnf("%s failed: %v", toolName, err)
 		}
 		return nil, fmt.Errorf("tally request failed: %w", err)
+	}
+
+	// Log raw response
+	if h.log != nil {
+		h.log.Infof("Raw response from %s: %s", toolName, string(xmlResp))
 	}
 
 	// Parse response

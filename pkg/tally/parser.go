@@ -97,7 +97,25 @@ func parseImportResult(xmlData []byte) (map[string]interface{}, error) {
 func extractFields(node *xmlquery.Node, fields map[string]FieldSpec) map[string]interface{} {
 	item := make(map[string]interface{}, len(fields))
 	for fieldName, spec := range fields {
+		// Check if this is a nested list
+		if spec.ItemsXPath != "" {
+			nodes, err := xmlquery.QueryAll(node, spec.ItemsXPath)
+			if err == nil {
+				nestedItems := make([]map[string]interface{}, 0, len(nodes))
+				for _, nestedNode := range nodes {
+					nestedItems = append(nestedItems, extractFields(nestedNode, spec.Fields))
+				}
+				item[fieldName] = nestedItems
+			}
+			continue
+		}
+
+		// Handle simple fields
 		var raw string
+		if spec.XPath == "" {
+			// No xpath specified, skip
+			continue
+		}
 		if strings.HasPrefix(spec.XPath, "@") {
 			raw = node.SelectAttr(spec.XPath[1:])
 		} else {

@@ -1,19 +1,11 @@
 name: get_debtor_vouchers
-description: Fetch all sales vouchers for a specific debtor within a date range
+description: Fetch all Sales vouchers for a specific debtor
 implicit_params:
   - company_name
 input_schema:
   properties:
     debtor_ledger_name:
       type: string
-      description: Name of the debtor/customer ledger (e.g., "ABC Corp")
-    start_date:
-      type: string
-      description: Start date for voucher range in YYYYMMDD format
-    end_date:
-      type: string
-      description: End date for voucher range in YYYYMMDD format
+      description: Name of the debtor/customer ledger (e.g., "TestStore")
   required:
     - debtor_ledger_name
-    - start_date
-    - end_date
