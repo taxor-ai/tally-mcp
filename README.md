@@ -22,8 +22,8 @@ Built with Go for cross-platform support (macOS, Linux, Windows).
 - `get_ledger_details` - Get detailed information for a specific ledger
 - `get_debtors` - List all debtor ledgers with outstanding amounts
 - `get_creditors` - List all creditor ledgers with outstanding amounts
-- `get_creditor_vouchers` - Fetch past vouchers (transactions) for a specific creditor
-- `get_debtor_vouchers` - Fetch past sales vouchers for a specific debtor/customer
+- `get_sales_vouchers` - Fetch past sales vouchers for a specific customer/debtor ledger
+- `get_journal_vouchers` - Fetch past journal vouchers for a specific vendor/creditor ledger
 
 ✅ **Write Operations**
 - `create_ledger` - Create a new ledger account
@@ -50,6 +50,48 @@ Built with Go for cross-platform support (macOS, Linux, Windows).
 - **Claude Desktop** (native application, not claude.ai)
 - **Tally Server** running locally or accessible at network address
 - Tally company credentials
+
+## Tally Setup
+
+Before installing the extension, configure your Tally instance:
+
+### 1. Enable XML API Access
+
+Tally communicates via XML-RPC protocol. Ensure it's enabled:
+
+1. Open **Tally** application
+2. Go to **F1 (Help) → F1 (Help)** or **Gateway → Settings**
+3. Navigate to **Network/Internet** or **TCP-IP Port Settings**
+4. Confirm **TCP Port** is enabled (default: 9900)
+5. Note the **port number** - you'll need this during installation
+
+> Tally typically has XML-RPC enabled by default on port 9900.
+
+### 2. Configure Voucher Numbering for Automatic Creation
+
+The extension creates Sales and Journal vouchers with automatic numbering. Configure Tally's numbering method:
+
+#### For Sales Vouchers:
+1. In Tally, go to **Gateway → Masters → Voucher Type**
+2. Select or open the **Sales** voucher type
+3. Look for **Numbering Method** or **Number Series**
+4. Set to: **Automatic** (not "Automatic with Manual Override")
+   - This allows the extension to create vouchers without specifying manual voucher numbers
+5. Save changes
+
+#### For Journal Vouchers:
+1. In Tally, go to **Gateway → Masters → Voucher Type**
+2. Select or open the **Journal** voucher type
+3. Set **Numbering Method** to: **Automatic**
+4. Save changes
+
+> **Important:** If numbering is set to "Automatic with Manual Override" or manual modes, voucher creation may fail with validation errors.
+
+### 3. Verify Company Exists
+
+1. In Tally, go to **Gateway → Masters → Company**
+2. Note the **exact name** of your company (case-sensitive)
+3. You'll need this exact name during extension configuration
 
 ## Installation
 
@@ -163,9 +205,14 @@ The extension reads these environment variables:
 When you install the extension, Claude Desktop prompts for configuration:
 
 - **Tally Server Host** - Your Tally server address (localhost, 192.168.x.x, etc.)
+  - *From Tally Setup:* Found in Tally's Network/TCP-IP settings
 - **Tally Port** - Port where Tally is listening (default: 9900)
-- **Company Name** - Exact name of the company in Tally
-- **Log Level** - Verbosity for debugging
+  - *From Tally Setup:* Confirmed in Tally's Network settings
+- **Company Name** - Exact name of the company in Tally (case-sensitive)
+  - *From Tally Setup:* Verified in Gateway → Masters → Company
+- **Log Level** - Verbosity for debugging (debug, info, warn, error)
+
+> **Before configuring here:** Complete the [Tally Setup](#tally-setup) section above
 
 ## Usage
 
@@ -200,14 +247,21 @@ tally-mcp/
 │   ├── handler.go            # Tool call routing
 │   ├── tools.go              # Tool definitions
 │   └── response.go           # Response formatting
-├── tally/
+├── pkg/tally/
 │   ├── client.go             # Tally XML-RPC client
 │   ├── models.go             # Data models
-│   ├── templates/            # XML-RPC templates
-│   └── [parser files]        # Response parsing
+│   ├── parser.go             # Response parsing
+│   └── [other files]         # Supporting modules
+├── tools/                     # Tool definitions (XML + YAML)
+│   ├── company/              # Company tools
+│   ├── ledger/               # Ledger tools
+│   └── voucher/              # Voucher tools
+├── tests/
+│   ├── unit/                 # Unit tests
+│   └── integration/          # Integration tests (requires live Tally)
 ├── dist/
 │   └── tally-mcp-bundle/
-│       ├── manifest.json     # Extension manifest (v0.2)
+│       ├── manifest.json     # Extension manifest
 │       ├── icon.png          # Extension icon
 │       └── server/           # Platform binaries
 └── README.md
@@ -370,6 +424,23 @@ go test -tags=integration -v ./tests/integration/...
 5. **Test** before rebuilding package
 
 ## Troubleshooting
+
+### Voucher creation fails with exceptions
+
+**Cause:** Tally voucher numbering is not set to "Automatic"
+
+**Solution:**
+1. Open Tally and navigate to **Gateway → Masters → Voucher Type**
+2. For both **Sales** and **Journal** voucher types:
+   - Select each voucher type
+   - Change **Numbering Method** to **Automatic** (not "Automatic with Manual Override")
+   - Save changes
+3. Retry voucher creation in Claude
+
+**Error messages that indicate this issue:**
+- `EXCEPTIONS=1` in Tally response
+- "Duplicate voucher number" 
+- Voucher creation returns `created=0`
 
 ### Tools not showing up
 
