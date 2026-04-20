@@ -80,6 +80,7 @@ func parseImportResult(xmlData []byte) (map[string]interface{}, error) {
 	}
 	created := nodeInt(doc, "//IMPORTRESULT/CREATED")
 	altered := nodeInt(doc, "//IMPORTRESULT/ALTERED")
+	exceptions := nodeInt(doc, "//IMPORTRESULT/EXCEPTIONS")
 	errMsg := nodeText(doc, "//IMPORTRESULT/LINEERROR")
 	success := created > 0 || altered > 0
 	result := map[string]interface{}{
@@ -89,6 +90,10 @@ func parseImportResult(xmlData []byte) (map[string]interface{}, error) {
 	}
 	if errMsg != "" {
 		result["error"] = errMsg
+		result["success"] = false
+	}
+	if exceptions > 0 {
+		result["error"] = "Tally returned exception(s) during import"
 		result["success"] = false
 	}
 	return result, nil

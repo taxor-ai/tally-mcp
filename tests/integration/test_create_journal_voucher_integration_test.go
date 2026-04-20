@@ -8,16 +8,16 @@ import (
 )
 
 // TestCreateJournalVoucher creates a journal voucher for Cursor using the same
-// ledgers as existing vouchers, then verifies it appears in get_creditor_vouchers.
+// ledgers as existing vouchers, then verifies it appears in get_journal_vouchers.
 func TestCreateJournalVoucher(t *testing.T) {
 	handler := setupHandler(t)
 
 	// Step 1: Get current voucher count for Cursor
-	before, err := handler.HandleToolCall("get_creditor_vouchers", map[string]interface{}{
-		"creditor_ledger_name": "Cursor",
+	before, err := handler.HandleToolCall("get_journal_vouchers", map[string]interface{}{
+		"party_ledger_name": "Cursor",
 	})
 	if err != nil {
-		t.Fatalf("get_creditor_vouchers (before) failed: %v", err)
+		t.Fatalf("get_journal_vouchers (before) failed: %v", err)
 	}
 	beforeVouchers := before.(map[string]interface{})["vouchers"].([]map[string]interface{})
 	t.Logf("Cursor vouchers before: %d", len(beforeVouchers))
@@ -50,13 +50,13 @@ func TestCreateJournalVoucher(t *testing.T) {
 	}
 	t.Logf("✓ Journal voucher created (created=%v)", m["created"])
 
-	// Step 4: Verify by calling get_creditor_vouchers — count must increase by 1
+	// Step 4: Verify by calling get_journal_vouchers — count must increase by 1
 	time.Sleep(300 * time.Millisecond)
-	after, err := handler.HandleToolCall("get_creditor_vouchers", map[string]interface{}{
-		"creditor_ledger_name": "Cursor",
+	after, err := handler.HandleToolCall("get_journal_vouchers", map[string]interface{}{
+		"party_ledger_name": "Cursor",
 	})
 	if err != nil {
-		t.Fatalf("get_creditor_vouchers (after) failed: %v", err)
+		t.Fatalf("get_journal_vouchers (after) failed: %v", err)
 	}
 	afterVouchers := after.(map[string]interface{})["vouchers"].([]map[string]interface{})
 	t.Logf("Cursor vouchers after: %d", len(afterVouchers))

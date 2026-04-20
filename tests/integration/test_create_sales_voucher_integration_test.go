@@ -8,16 +8,16 @@ import (
 )
 
 // TestCreateSalesVoucher creates a sales voucher for TestStore using the same
-// ledgers as existing vouchers, then verifies it appears in get_debtor_vouchers.
+// ledgers as existing vouchers, then verifies it appears in get_sales_vouchers.
 func TestCreateSalesVoucher(t *testing.T) {
 	handler := setupHandler(t)
 
 	// Step 1: Get current voucher count for TestStore
-	before, err := handler.HandleToolCall("get_debtor_vouchers", map[string]interface{}{
-		"debtor_ledger_name": "TestStore",
+	before, err := handler.HandleToolCall("get_sales_vouchers", map[string]interface{}{
+		"party_ledger_name": "TestStore",
 	})
 	if err != nil {
-		t.Fatalf("get_debtor_vouchers (before) failed: %v", err)
+		t.Fatalf("get_sales_vouchers (before) failed: %v", err)
 	}
 	beforeVouchers := before.(map[string]interface{})["vouchers"].([]map[string]interface{})
 	t.Logf("TestStore vouchers before: %d", len(beforeVouchers))
@@ -25,10 +25,10 @@ func TestCreateSalesVoucher(t *testing.T) {
 	// Step 2: Create a sales voucher using the same ledgers as existing vouchers:
 	//   TestStore (debit) → Delivery Management Software Service-GST + Output SGST + Output CGST (credit)
 	result, err := handler.HandleToolCall("create_sales_voucher", map[string]interface{}{
-		"date":               "20260401",
-		"reference":          "TEST-SAL-APR-01",
+		"date":               "20260402",
+		"reference":          "TEST-SAL-APR-02",
 		"narration":          "Being the sale for the month of April'26",
-		"debtor_ledger_name": "TestStore",
+		"party_ledger_name": "TestStore",
 		"lines": []map[string]interface{}{
 			{"ledger_name": "TestStore", "entry_type": "debit", "amount": 2.36},
 			{"ledger_name": "Delivery Management Software Service-GST", "entry_type": "credit", "amount": 2.0},
@@ -51,13 +51,13 @@ func TestCreateSalesVoucher(t *testing.T) {
 	}
 	t.Logf("✓ Sales voucher created (created=%v)", m["created"])
 
-	// Step 4: Verify by calling get_debtor_vouchers — count must increase by 1
+	// Step 4: Verify by calling get_sales_vouchers — count must increase by 1
 	time.Sleep(300 * time.Millisecond)
-	after, err := handler.HandleToolCall("get_debtor_vouchers", map[string]interface{}{
-		"debtor_ledger_name": "TestStore",
+	after, err := handler.HandleToolCall("get_sales_vouchers", map[string]interface{}{
+		"party_ledger_name": "TestStore",
 	})
 	if err != nil {
-		t.Fatalf("get_debtor_vouchers (after) failed: %v", err)
+		t.Fatalf("get_sales_vouchers (after) failed: %v", err)
 	}
 	afterVouchers := after.(map[string]interface{})["vouchers"].([]map[string]interface{})
 	t.Logf("TestStore vouchers after: %d", len(afterVouchers))
@@ -68,7 +68,7 @@ func TestCreateSalesVoucher(t *testing.T) {
 
 	// Find and log the new voucher
 	for _, v := range afterVouchers {
-		if v["reference"] == "TEST-SAL-APR-01" {
+		if v["reference"] == "TEST-SAL-APR-02" {
 			t.Logf("✓ New voucher confirmed: number=%v date=%v reference=%v", v["voucher_number"], v["date"], v["reference"])
 			return
 		}

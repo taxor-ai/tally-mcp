@@ -1,0 +1,11 @@
+name: get_journal_vouchers
+description: Fetch all Journal vouchers for a specific party ledger
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    party_ledger_name:
+      type: string
+      description: Name of the party (creditor/vendor) ledger (e.g., "Cursor")
+  required:
+    - party_ledger_name

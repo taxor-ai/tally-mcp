@@ -56,7 +56,7 @@ func TestGetCompaniesUnit(t *testing.T) {
 	client.SetCompany(company)
 
 	// Load registry
-	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	registry, err := tally.LoadRegistry("tools")
 	if err != nil {
 		t.Fatalf("Failed to load registry: %v", err)
 	}
@@ -215,7 +215,7 @@ func TestUnknownToolErrorHandling(t *testing.T) {
 	client.SetCompany("TestCompany")
 
 	// Load registry
-	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	registry, err := tally.LoadRegistry("tools")
 	if err != nil {
 		t.Fatalf("Failed to load registry: %v", err)
 	}
@@ -258,7 +258,7 @@ func TestCompleteRequestResponse(t *testing.T) {
 	port := getIntEnvOrDefaultMain("TALLY_PORT", 9900)
 	client := tally.NewClient(host, port, 30)
 	client.SetCompany(company)
-	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	registry, err := tally.LoadRegistry("tools")
 	if err != nil {
 		t.Fatalf("Failed to load registry: %v", err)
 	}
@@ -345,7 +345,7 @@ func TestToolsList(t *testing.T) {
 	client.SetCompany("TestCompany")
 
 	// Load registry
-	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	registry, err := tally.LoadRegistry("tools")
 	if err != nil {
 		t.Fatalf("Failed to load registry: %v", err)
 	}
@@ -383,8 +383,8 @@ func TestToolsList(t *testing.T) {
 // BenchmarkGetCompanies benchmarks the get_companies tool performance
 func BenchmarkGetCompanies(b *testing.B) {
 	// Set up templates directory (use os.Setenv since benchmarks don't use t.Cleanup)
-	os.Setenv("TALLY_TEMPLATES_DIR", "pkg/tally/templates")
-	defer os.Unsetenv("TALLY_TEMPLATES_DIR")
+	os.Setenv("TALLY_TOOLS_DIR", "tools")
+	defer os.Unsetenv("TALLY_TOOLS_DIR")
 
 	// Create logger (use /dev/null equivalent)
 	log, _ := logger.New("warn", "")
@@ -392,7 +392,7 @@ func BenchmarkGetCompanies(b *testing.B) {
 	// Create handler
 	client := tally.NewClient("localhost", 9900, 30)
 	client.SetCompany("TestCompany")
-	registry, _ := tally.LoadRegistry("pkg/tally/templates")
+	registry, _ := tally.LoadRegistry("tools")
 	handler := mcp.NewHandler(client, registry, log)
 
 	// Run the benchmark
@@ -402,14 +402,14 @@ func BenchmarkGetCompanies(b *testing.B) {
 	}
 }
 
-// setupTemplatesDir sets the TALLY_TEMPLATES_DIR environment variable for tests
+// setupTemplatesDir sets the TALLY_TOOLS_DIR environment variable for tests
 // Finds the templates directory relative to the project root
 func setupTemplatesDir(t *testing.T) {
 	// Try multiple paths to find templates from different test working directories
 	candidates := []string{
-		"pkg/tally/templates",
-		"../../pkg/tally/templates",
-		"../../../pkg/tally/templates",
+		"tools",
+		"../../tools",
+		"../../../tools",
 	}
 
 	var found string
@@ -421,11 +421,11 @@ func setupTemplatesDir(t *testing.T) {
 	}
 
 	if found == "" {
-		t.Fatal("Could not find pkg/tally/templates from any expected path")
+		t.Fatal("Could not find tools from any expected path")
 	}
 
-	os.Setenv("TALLY_TEMPLATES_DIR", found)
-	t.Cleanup(func() { os.Unsetenv("TALLY_TEMPLATES_DIR") })
+	os.Setenv("TALLY_TOOLS_DIR", found)
+	t.Cleanup(func() { os.Unsetenv("TALLY_TOOLS_DIR") })
 }
 
 // Helper function to assert JSON is valid
@@ -452,14 +452,14 @@ func TestNewToolsDiscovery(t *testing.T) {
 	setupTemplatesDir(t)
 
 	// Load registry
-	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	registry, err := tally.LoadRegistry("tools")
 	if err != nil {
 		t.Fatalf("Failed to load registry: %v", err)
 	}
 
 	// Expected new tools
 	expectedTools := []string{
-		"get_debtor_vouchers",
+		"get_sales_vouchers",
 		"create_journal_voucher",
 		"create_sales_voucher",
 	}
@@ -490,7 +490,7 @@ func TestNewToolsDiscovery(t *testing.T) {
 func TestNewToolsSchemas(t *testing.T) {
 	setupTemplatesDir(t)
 
-	registry, err := tally.LoadRegistry("pkg/tally/templates")
+	registry, err := tally.LoadRegistry("tools")
 	if err != nil {
 		t.Fatalf("Failed to load registry: %v", err)
 	}
@@ -500,8 +500,8 @@ func TestNewToolsSchemas(t *testing.T) {
 		requiredFields []string
 	}{
 		{
-			toolName:       "get_debtor_vouchers",
-			requiredFields: []string{"debtor_ledger_name", "start_date", "end_date"},
+			toolName:       "get_sales_vouchers",
+			requiredFields: []string{"party_ledger_name"},
 		},
 		{
 			toolName:       "create_journal_voucher",
@@ -509,7 +509,7 @@ func TestNewToolsSchemas(t *testing.T) {
 		},
 		{
 			toolName:       "create_sales_voucher",
-			requiredFields: []string{"date", "reference", "narration", "debtor_ledger_name", "lines"},
+			requiredFields: []string{"date", "reference", "narration", "party_ledger_name", "lines"},
 		},
 	}
 

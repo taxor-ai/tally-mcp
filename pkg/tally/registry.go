@@ -102,36 +102,36 @@ func (r *Registry) All() []*ToolDefinition {
 	return out
 }
 
-// LoadRegistry scans the templates directory on the filesystem for tool.yaml files and builds a Registry.
+// LoadRegistry scans the tools directory on the filesystem for tool.yaml files and builds a Registry.
 // Each tool lives in its own subdirectory alongside request.xml and parser.yaml.
-// The templatesDir parameter should be the path to the templates directory (relative or absolute).
-// For deployed binaries, this is typically {binary_dir}/templates.
-// For development, it falls back to pkg/tally/templates.
-func LoadRegistry(templatesDir string) (*Registry, error) {
+// The toolsDir parameter should be the path to the tools directory (relative or absolute).
+// For deployed binaries, this is typically {binary_dir}/tools.
+// For development, it falls back to the TALLY_TOOLS_DIR env var or "./tools".
+func LoadRegistry(toolsDir string) (*Registry, error) {
 	reg := newRegistry()
 
-	// Resolve templates directory path
-	// Priority: env var TALLY_TEMPLATES_DIR (if set) > provided path > "templates" in current dir
+	// Resolve tools directory path
+	// Priority: env var TALLY_TOOLS_DIR (if set) > provided path > "tools" in current dir
 	var err error
-	if envDir := os.Getenv("TALLY_TEMPLATES_DIR"); envDir != "" {
-		templatesDir = envDir
+	if envDir := os.Getenv("TALLY_TOOLS_DIR"); envDir != "" {
+		toolsDir = envDir
 	}
 
 	// Check if the directory exists
-	if _, err = os.Stat(templatesDir); err != nil {
-		// If provided path doesn't exist, try "templates" in current directory
-		if _, err2 := os.Stat("templates"); err2 == nil {
-			templatesDir = "templates"
+	if _, err = os.Stat(toolsDir); err != nil {
+		// If provided path doesn't exist, try "tools" in current directory
+		if _, err2 := os.Stat("tools"); err2 == nil {
+			toolsDir = "tools"
 		} else {
 			// Show helpful error with instructions on how to fix it
-			if os.Getenv("TALLY_TEMPLATES_DIR") != "" {
-				return nil, fmt.Errorf("templates directory not found at %s (from TALLY_TEMPLATES_DIR): %w", templatesDir, err)
+			if os.Getenv("TALLY_TOOLS_DIR") != "" {
+				return nil, fmt.Errorf("tools directory not found at %s (from TALLY_TOOLS_DIR): %w", toolsDir, err)
 			}
-			return nil, fmt.Errorf("templates directory not found at %s or ./templates (set TALLY_TEMPLATES_DIR to override): %w", templatesDir, err)
+			return nil, fmt.Errorf("tools directory not found at %s or ./tools (set TALLY_TOOLS_DIR to override): %w", toolsDir, err)
 		}
 	}
 
-	err = filepath.WalkDir(templatesDir, func(path string, d fs.DirEntry, walkErr error) error {
+	err = filepath.WalkDir(toolsDir, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}

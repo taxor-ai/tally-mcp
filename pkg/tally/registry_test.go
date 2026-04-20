@@ -9,24 +9,24 @@ import (
 // findTemplatesDir finds the templates directory from expected paths
 func findTemplatesDir(t *testing.T) string {
 	candidates := []string{
-		"pkg/tally/templates",
-		"../../pkg/tally/templates",
-		"../../../pkg/tally/templates",
+		"tools",
+		"../../tools",
+		"../../../tools",
 	}
 	for _, candidate := range candidates {
 		if _, err := os.Stat(candidate); err == nil {
 			return candidate
 		}
 	}
-	t.Fatal("Could not find pkg/tally/templates from any expected path")
+	t.Fatal("Could not find tools from any expected path")
 	return ""
 }
 
 func TestRegistryLoadsBuiltinTools(t *testing.T) {
 	// Set templates directory for test
 	templatesDir := findTemplatesDir(t)
-	os.Setenv("TALLY_TEMPLATES_DIR", templatesDir)
-	defer os.Unsetenv("TALLY_TEMPLATES_DIR")
+	os.Setenv("TALLY_TOOLS_DIR", templatesDir)
+	defer os.Unsetenv("TALLY_TOOLS_DIR")
 
 	registry, err := tally.LoadRegistry(templatesDir)
 	if err != nil {
@@ -41,8 +41,8 @@ func TestRegistryLoadsBuiltinTools(t *testing.T) {
 func TestRegistryGetUnknownTool(t *testing.T) {
 	// Set templates directory for test
 	templatesDir := findTemplatesDir(t)
-	os.Setenv("TALLY_TEMPLATES_DIR", templatesDir)
-	defer os.Unsetenv("TALLY_TEMPLATES_DIR")
+	os.Setenv("TALLY_TOOLS_DIR", templatesDir)
+	defer os.Unsetenv("TALLY_TOOLS_DIR")
 
 	registry, err := tally.LoadRegistry(templatesDir)
 	if err != nil {

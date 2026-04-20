@@ -9,11 +9,11 @@ import (
 func TestGetCreditorVouchers(t *testing.T) {
 	handler := setupHandler(t)
 
-	result, err := handler.HandleToolCall("get_creditor_vouchers", map[string]interface{}{
-		"creditor_ledger_name": "Cursor",
+	result, err := handler.HandleToolCall("get_journal_vouchers", map[string]interface{}{
+		"party_ledger_name": "Cursor",
 	})
 	if err != nil {
-		t.Fatalf("get_creditor_vouchers failed: %v", err)
+		t.Fatalf("get_journal_vouchers failed: %v", err)
 	}
 
 	m := result.(map[string]interface{})
@@ -32,7 +32,7 @@ func TestGetCreditorVouchers(t *testing.T) {
 			t.Errorf("voucher %d: expected type=Journal, got %q", i+1, voucherType)
 		}
 	}
-	t.Logf("✓ get_creditor_vouchers (Cursor): %d Journal vouchers", len(vouchers))
+	t.Logf("✓ get_journal_vouchers (Cursor): %d Journal vouchers", len(vouchers))
 	for i, v := range vouchers {
 		if i >= 3 {
 			break

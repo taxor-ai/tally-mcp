@@ -18,8 +18,8 @@ func setupHandler(t *testing.T) *mcp.Handler {
 	t.Helper()
 
 	candidates := []string{
-		"pkg/tally/templates",
-		"../../pkg/tally/templates",
+		"tools",
+		"../../tools",
 	}
 	var templatesDir string
 	for _, c := range candidates {
@@ -29,10 +29,10 @@ func setupHandler(t *testing.T) *mcp.Handler {
 		}
 	}
 	if templatesDir == "" {
-		t.Fatal("could not find pkg/tally/templates")
+		t.Fatal("could not find tools")
 	}
-	os.Setenv("TALLY_TEMPLATES_DIR", templatesDir)
-	t.Cleanup(func() { os.Unsetenv("TALLY_TEMPLATES_DIR") })
+	os.Setenv("TALLY_TOOLS_DIR", templatesDir)
+	t.Cleanup(func() { os.Unsetenv("TALLY_TOOLS_DIR") })
 
 	host := os.Getenv("TALLY_HOST")
 	if host == "" {
@@ -46,7 +46,7 @@ func setupHandler(t *testing.T) *mcp.Handler {
 	}
 	company := os.Getenv("TALLY_COMPANY")
 
-	log, _ := logger.New("warn", "")
+	log, _ := logger.New("info", "")
 	client := tally.NewClient(host, port, 30)
 	client.SetCompany(company)
 
@@ -63,8 +63,8 @@ func setupHandler(t *testing.T) *mcp.Handler {
 
 func TestRegistryHasAllExpectedTools(t *testing.T) {
 	candidates := []string{
-		"pkg/tally/templates",
-		"../../pkg/tally/templates",
+		"tools",
+		"../../tools",
 	}
 	var templatesDir string
 	for _, c := range candidates {
@@ -74,10 +74,10 @@ func TestRegistryHasAllExpectedTools(t *testing.T) {
 		}
 	}
 	if templatesDir == "" {
-		t.Fatal("could not find pkg/tally/templates")
+		t.Fatal("could not find tools")
 	}
-	os.Setenv("TALLY_TEMPLATES_DIR", templatesDir)
-	t.Cleanup(func() { os.Unsetenv("TALLY_TEMPLATES_DIR") })
+	os.Setenv("TALLY_TOOLS_DIR", templatesDir)
+	t.Cleanup(func() { os.Unsetenv("TALLY_TOOLS_DIR") })
 
 	registry, err := tally.LoadRegistry(templatesDir)
 	if err != nil {
@@ -91,8 +91,8 @@ func TestRegistryHasAllExpectedTools(t *testing.T) {
 		"create_ledger",
 		"get_debtors",
 		"get_creditors",
-		"get_debtor_vouchers",
-		"get_creditor_vouchers",
+		"get_sales_vouchers",
+		"get_journal_vouchers",
 		"create_journal_voucher",
 		"create_sales_voucher",
 	}

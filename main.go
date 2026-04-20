@@ -58,22 +58,22 @@ func main() {
 	client := tally.NewClient(cfg.Tally.Host, cfg.Tally.Port, 30)
 	client.SetCompany(cfg.Tally.Company)
 
-	// Load tool registry from templates directory
-	// Templates are located next to the binary: {binary_dir}/templates
+	// Load tool registry from tools directory
+	// Tools are located next to the binary: {binary_dir}/tools
 	exePath, err := os.Executable()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error determining executable path: %v\n", err)
 		os.Exit(1)
 	}
 	exeDir := filepath.Dir(exePath)
-	templatesDir := filepath.Join(exeDir, "templates")
+	toolsDir := filepath.Join(exeDir, "tools")
 
-	registry, err := tally.LoadRegistry(templatesDir)
+	registry, err := tally.LoadRegistry(toolsDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading tool registry: %v\n", err)
 		os.Exit(1)
 	}
-	log.Infof("Tool registry loaded from %s with %d tools", templatesDir, len(registry.All()))
+	log.Infof("Tool registry loaded from %s with %d tools", toolsDir, len(registry.All()))
 	handler := mcp.NewHandler(client, registry, log)
 
 	// Process requests from stdin

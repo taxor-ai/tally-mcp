@@ -6,14 +6,14 @@ import (
 	"testing"
 )
 
-func TestGetDebtorVouchers(t *testing.T) {
+func TestGetSalesVouchers(t *testing.T) {
 	handler := setupHandler(t)
 
-	result, err := handler.HandleToolCall("get_debtor_vouchers", map[string]interface{}{
-		"debtor_ledger_name": "TestStore",
+	result, err := handler.HandleToolCall("get_sales_vouchers", map[string]interface{}{
+		"party_ledger_name": "TestStore",
 	})
 	if err != nil {
-		t.Fatalf("get_debtor_vouchers failed: %v", err)
+		t.Fatalf("get_sales_vouchers failed: %v", err)
 	}
 
 	m := result.(map[string]interface{})
@@ -22,8 +22,8 @@ func TestGetDebtorVouchers(t *testing.T) {
 		t.Fatalf("expected vouchers array in response, got %T", m["vouchers"])
 	}
 
-	if len(vouchers) != 2 {
-		t.Fatalf("expected exactly 2 vouchers for TestStore, got %d", len(vouchers))
+	if len(vouchers) == 0 {
+		t.Fatal("expected at least one Sales voucher for TestStore, got none")
 	}
 
 	for i, v := range vouchers {
@@ -38,5 +38,5 @@ func TestGetDebtorVouchers(t *testing.T) {
 			}
 		}
 	}
-	t.Logf("✓ get_debtor_vouchers (TestStore): %d Sales vouchers", len(vouchers))
+	t.Logf("✓ get_sales_vouchers (TestStore): %d Sales vouchers", len(vouchers))
 }

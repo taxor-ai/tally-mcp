@@ -1,0 +1,11 @@
+name: get_sales_vouchers
+description: Fetch all Sales vouchers for a specific party ledger
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    party_ledger_name:
+      type: string
+      description: Name of the party (debtor/customer) ledger (e.g., "TestStore")
+  required:
+    - party_ledger_name

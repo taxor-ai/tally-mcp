@@ -47,11 +47,11 @@ func escapeXML(s string) string {
 	return s
 }
 
-// LoadTemplate loads and parameterizes an XML template from the templates directory
+// LoadTemplate loads and parameterizes an XML template from the tools directory
 func LoadTemplate(templatePath string, params map[string]interface{}) (string, error) {
-	// Load from templates/{category}/{toolname}/request.xml
-	// Example: "ledger/create_ledger" -> "templates/ledger/create_ledger/request.xml"
-	fullPath := fmt.Sprintf("templates/%s/request.xml", templatePath)
+	// Load from tools/{category}/{toolname}/request.xml
+	// Example: "ledger/create_ledger" -> "tools/ledger/create_ledger/request.xml"
+	fullPath := fmt.Sprintf("tools/%s/request.xml", templatePath)
 	data, err := readFile(fullPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to load template %s: %w", templatePath, err)

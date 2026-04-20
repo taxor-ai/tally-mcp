@@ -18,7 +18,7 @@
                     <VOUCHERTYPENAME>Sales</VOUCHERTYPENAME>
                     <REFERENCE>{{ e .reference }}</REFERENCE>
                     <NARRATION>{{ e .narration }}</NARRATION>
-                    <PARTYLEDGER>{{ e .debtor_ledger_name }}</PARTYLEDGER>
+                    <PARTYLEDGER>{{ e .party_ledger_name }}</PARTYLEDGER>
 
                     {{ range .lines }}
                     <ALLLEDGERENTRIES.LIST>

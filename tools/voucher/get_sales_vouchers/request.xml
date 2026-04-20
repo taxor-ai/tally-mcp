@@ -3,7 +3,7 @@
         <VERSION>1</VERSION>
         <TALLYREQUEST>Export</TALLYREQUEST>
         <TYPE>Collection</TYPE>
-        <ID>CreditorVouchers</ID>
+        <ID>DebtorVouchers</ID>
     </HEADER>
     <BODY>
         <DESC>
@@ -13,13 +13,13 @@
             </STATICVARIABLES>
             <TDL>
                 <TDLMESSAGE>
-                    <COLLECTION NAME="CreditorVouchers">
+                    <COLLECTION NAME="DebtorVouchers">
                         <TYPE>Voucher</TYPE>
                         <FETCH>DATE, VOUCHERNUMBER, REFERENCE, NARRATION, VOUCHERTYPENAME, ALLLEDGERENTRIES</FETCH>
-                        <FILTER>IsCreditorJournalVoucher</FILTER>
+                        <FILTER>IsDebtorSalesVoucher</FILTER>
                     </COLLECTION>
-                    <SYSTEM TYPE="Formula" NAME="IsCreditorJournalVoucher">$VOUCHERTYPENAME = "Journal" AND NOT $$IsEmpty:$$FilterValue:$LEDGERNAME:ALLLEDGERENTRIES:FIRST:MatchCreditorLedger</SYSTEM>
-                    <SYSTEM TYPE="Formula" NAME="MatchCreditorLedger">$LEDGERNAME = "{{ creditor_ledger_name | e }}"</SYSTEM>
+                    <SYSTEM TYPE="Formula" NAME="IsDebtorSalesVoucher">$VOUCHERTYPENAME = "Sales" AND NOT $$IsEmpty:$$FilterValue:$LEDGERNAME:ALLLEDGERENTRIES:FIRST:MatchDebtorLedger</SYSTEM>
+                    <SYSTEM TYPE="Formula" NAME="MatchDebtorLedger">$LEDGERNAME = "{{ party_ledger_name | e }}"</SYSTEM>
                 </TDLMESSAGE>
             </TDL>
         </DESC>
