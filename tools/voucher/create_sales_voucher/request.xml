@@ -23,8 +23,8 @@
                     {{ range .lines }}
                     <ALLLEDGERENTRIES.LIST>
                         <LEDGERNAME>{{ e .ledger_name }}</LEDGERNAME>
-                        <ISDEEMEDPOSITIVE>{{ if eq .entry_type "debit" }}Yes{{ else }}No{{ end }}</ISDEEMEDPOSITIVE>
-                        <AMOUNT>{{ if eq .entry_type "debit" }}-{{ .amount }}{{ else }}{{ .amount }}{{ end }}</AMOUNT>
+                        <ISDEEMEDPOSITIVE>{{ if lt .amount 0.0 }}Yes{{ else }}No{{ end }}</ISDEEMEDPOSITIVE>
+                        <AMOUNT>{{ .amount }}</AMOUNT>
                         {{ if .bill_allocations }}
                         {{ range .bill_allocations }}
                         <BILLALLOCATIONS.LIST>

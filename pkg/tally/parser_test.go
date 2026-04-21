@@ -50,8 +50,7 @@ func TestNestedLedgerEntriesParsing(t *testing.T) {
 				XPath: "VOUCHERNUMBER",
 			},
 			"date": {
-				XPath:     "DATE",
-				Transform: "tally_date",
+				XPath: "DATE",
 			},
 			"voucher_type": {
 				XPath: "VOUCHERTYPENAME",
@@ -66,13 +65,8 @@ func TestNestedLedgerEntriesParsing(t *testing.T) {
 						XPath:     "AMOUNT",
 						Transform: "number",
 					},
-					"debit_credit": {
-						XPath:     "ISDEEMEDPOSITIVE",
-						Transform: "boolean",
-					},
 					"date": {
-						XPath:     "DATE",
-						Transform: "tally_date",
+						XPath: "DATE",
 					},
 					"reference": {
 						XPath: "REFERENCE",
@@ -108,7 +102,7 @@ func TestNestedLedgerEntriesParsing(t *testing.T) {
 		t.Errorf("Wrong voucher number: %v", voucher["voucher_number"])
 	}
 
-	if voucher["date"] != "2025-03-10" {
+	if voucher["date"] != "20250310" {
 		t.Errorf("Wrong date: %v", voucher["date"])
 	}
 
@@ -125,9 +119,6 @@ func TestNestedLedgerEntriesParsing(t *testing.T) {
 	if entry1["amount"] != -2.36 {
 		t.Errorf("Wrong amount: %v", entry1["amount"])
 	}
-	if entry1["debit_credit"] != false {
-		t.Errorf("Wrong debit_credit: %v", entry1["debit_credit"])
-	}
 
 	// Check second entry
 	entry2 := ledgerEntries[1]
@@ -136,9 +127,6 @@ func TestNestedLedgerEntriesParsing(t *testing.T) {
 	}
 	if entry2["amount"] != 2.36 {
 		t.Errorf("Wrong amount: %v", entry2["amount"])
-	}
-	if entry2["debit_credit"] != true {
-		t.Errorf("Wrong debit_credit: %v", entry2["debit_credit"])
 	}
 
 	t.Logf("✓ Nested ledger entries parsed correctly!")

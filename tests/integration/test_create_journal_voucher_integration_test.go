@@ -23,16 +23,16 @@ func TestCreateJournalVoucher(t *testing.T) {
 	t.Logf("Cursor vouchers before: %d", len(beforeVouchers))
 
 	// Step 2: Create a journal voucher using the same ledgers as existing vouchers:
-	//   Subscription Charges + IGST Input RCM (debit) → IGST RCM Payable A/c + Cursor (credit)
+	//   Subscription Charges + IGST Input RCM (debit: negative) → IGST RCM Payable A/c + Cursor (credit: positive)
 	result, err := handler.HandleToolCall("create_journal_voucher", map[string]interface{}{
 		"date":      "20260401",
 		"reference": "TEST-JNL-APR-01",
 		"narration": "Cursor Pro Apr 1 – May 1, 2026",
 		"lines": []map[string]interface{}{
-			{"ledger_name": "Subscription Charges", "entry_type": "debit", "amount": 1722.96},
-			{"ledger_name": "IGST Input RCM", "entry_type": "debit", "amount": 310.0},
-			{"ledger_name": "IGST RCM Payable A/c", "entry_type": "credit", "amount": 310.0},
-			{"ledger_name": "Cursor", "entry_type": "credit", "amount": 1722.96},
+			{"ledger_name": "Subscription Charges", "amount": -1722.96},
+			{"ledger_name": "IGST Input RCM", "amount": -310.0},
+			{"ledger_name": "IGST RCM Payable A/c", "amount": 310.0},
+			{"ledger_name": "Cursor", "amount": 1722.96},
 		},
 	})
 	if err != nil {

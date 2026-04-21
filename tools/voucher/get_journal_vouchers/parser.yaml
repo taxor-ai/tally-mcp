@@ -6,7 +6,6 @@ fields:
     xpath: VOUCHERNUMBER
   date:
     xpath: DATE
-    transform: tally_date
   reference:
     xpath: REFERENCE
   narration:
@@ -21,12 +20,8 @@ fields:
       amount:
         xpath: AMOUNT
         transform: number
-      debit_credit:
-        xpath: ISDEEMEDPOSITIVE
-        transform: boolean
       date:
         xpath: DATE
-        transform: tally_date
       reference:
         xpath: REFERENCE
       invoice_number:

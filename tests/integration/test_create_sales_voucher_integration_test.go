@@ -23,17 +23,17 @@ func TestCreateSalesVoucher(t *testing.T) {
 	t.Logf("TestStore vouchers before: %d", len(beforeVouchers))
 
 	// Step 2: Create a sales voucher using the same ledgers as existing vouchers:
-	//   TestStore (debit) → Delivery Management Software Service-GST + Output SGST + Output CGST (credit)
+	//   TestStore (debit, -2.36) → Delivery Management Software Service-GST + Output SGST + Output CGST (credit)
 	result, err := handler.HandleToolCall("create_sales_voucher", map[string]interface{}{
 		"date":               "20260402",
 		"reference":          "TEST-SAL-APR-02",
 		"narration":          "Being the sale for the month of April'26",
 		"party_ledger_name": "TestStore",
 		"lines": []map[string]interface{}{
-			{"ledger_name": "TestStore", "entry_type": "debit", "amount": 2.36},
-			{"ledger_name": "Delivery Management Software Service-GST", "entry_type": "credit", "amount": 2.0},
-			{"ledger_name": "Output SGST", "entry_type": "credit", "amount": 0.18},
-			{"ledger_name": "Output CGST", "entry_type": "credit", "amount": 0.18},
+			{"ledger_name": "TestStore", "amount": -2.36},
+			{"ledger_name": "Delivery Management Software Service-GST", "amount": 2.0},
+			{"ledger_name": "Output SGST", "amount": 0.18},
+			{"ledger_name": "Output CGST", "amount": 0.18},
 		},
 	})
 	if err != nil {

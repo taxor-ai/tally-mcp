@@ -15,36 +15,35 @@ input_schema:
       description: Description of the transaction
     lines:
       type: array
-      description: Array of ledger entries (debit/credit lines)
+      description: Array of ledger entries. Negative amounts are debits, positive amounts are credits. Must balance to zero.
       items:
         type: object
+        description: A ledger entry with account name and signed amount
         properties:
           ledger_name:
             type: string
-            description: Name of the ledger account (e.g., "Office Rent", "Travel Expense")
-          entry_type:
-            type: string
-            enum: [debit, credit]
-            description: Debit or credit entry
+            description: Name of the ledger account (e.g., "Office Rent", "Travel Expense", "Bank Account")
+            example: "Travel Expense"
           amount:
             type: number
-            description: Amount in absolute value (entry_type determines sign)
+            description: "Signed amount: negative for debit, positive for credit. Example: debit expense as -1000, credit bank as 1000"
+            example: -1000
           bill_allocations:
             type: array
-            description: Optional bill allocations (can be empty or omitted)
+            description: Optional bill allocations for tracking against bills/invoices. Can be omitted if not needed.
             items:
               type: object
               properties:
                 name:
                   type: string
-                  description: Bill/reference name
+                  description: Bill/invoice reference name or number
                 type:
                   type: string
-                  description: Bill type (e.g., "Bill Reference")
+                  description: Type of bill allocation (e.g., "Bill Reference", "Invoice")
                 amount:
                   type: number
-                  description: Allocated amount
-        required: [ledger_name, entry_type, amount]
+                  description: Amount allocated against this bill
+        required: [ledger_name, amount]
   required:
     - date
     - reference

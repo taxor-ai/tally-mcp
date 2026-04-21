@@ -6,7 +6,7 @@ import (
 )
 
 func TestLoadTemplate(t *testing.T) {
-	params := map[string]string{
+	params := map[string]interface{}{
 		"ledger_name":    "Office Supplies",
 		"parent":         "Indirect Expenses",
 		"company_name":   "Test Company",
@@ -23,7 +23,7 @@ func TestLoadTemplate(t *testing.T) {
 }
 
 func TestLoadTemplateWithoutParams(t *testing.T) {
-	xml, err := LoadTemplate("ledger/get_ledgers", map[string]string{})
+	xml, err := LoadTemplate("ledger/get_ledgers", map[string]interface{}{})
 	if err != nil {
 		t.Fatalf("LoadTemplate failed: %v", err)
 	}
