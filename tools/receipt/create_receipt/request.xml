@@ -1,0 +1,43 @@
+<ENVELOPE>
+    <HEADER>
+        <VERSION>1</VERSION>
+        <TALLYREQUEST>Import</TALLYREQUEST>
+        <TYPE>Data</TYPE>
+        <ID>Vouchers</ID>
+    </HEADER>
+    <BODY>
+        <DESC>
+            <STATICVARIABLES>
+                <SVCURRENTCOMPANY>{{ company_name | e }}</SVCURRENTCOMPANY>
+            </STATICVARIABLES>
+        </DESC>
+        <DATA>
+            <TALLYMESSAGE xmlns:UDF="TallyUDF">
+                <VOUCHER VCHTYPE="Receipt" ACTION="Create" OBJVIEW="Accounting Voucher View">
+                    <DATE>{{ date | e }}</DATE>
+                    <VOUCHERTYPENAME>Receipt</VOUCHERTYPENAME>
+                    <REFERENCE>{{ reference | e }}</REFERENCE>
+                    <NARRATION>{{ narration | e }}</NARRATION>
+
+                    {{ range .lines }}
+                    <ALLLEDGERENTRIES.LIST>
+                        <LEDGERNAME>{{ .ledger_name | e }}</LEDGERNAME>
+                        <ISDEEMEDPOSITIVE>{{ if isNeg .amount }}Yes{{ else }}No{{ end }}</ISDEEMEDPOSITIVE>
+                        <ISPARTYLEDGER>{{ if .is_party }}Yes{{ else }}No{{ end }}</ISPARTYLEDGER>
+                        <AMOUNT>{{ .amount }}</AMOUNT>
+                        {{ if .bill_allocations }}
+                        {{ range .bill_allocations }}
+                        <BILLALLOCATIONS.LIST>
+                            <NAME>{{ .name | e }}</NAME>
+                            <BILLTYPE>{{ .type | e }}</BILLTYPE>
+                            <AMOUNT>{{ .amount }}</AMOUNT>
+                        </BILLALLOCATIONS.LIST>
+                        {{ end }}
+                        {{ end }}
+                    </ALLLEDGERENTRIES.LIST>
+                    {{ end }}
+                </VOUCHER>
+            </TALLYMESSAGE>
+        </DATA>
+    </BODY>
+</ENVELOPE>

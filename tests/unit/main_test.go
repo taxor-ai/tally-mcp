@@ -464,6 +464,8 @@ func TestNewToolsDiscovery(t *testing.T) {
 		"create_sales_voucher",
 		"get_payments",
 		"create_payment",
+		"get_receipts",
+		"create_receipt",
 	}
 
 	// Get all tools from registry
@@ -520,6 +522,14 @@ func TestNewToolsSchemas(t *testing.T) {
 		{
 			toolName:       "create_payment",
 			requiredFields: []string{"date", "reference", "narration", "party_ledger_name", "lines"},
+		},
+		{
+			toolName:       "get_receipts",
+			requiredFields: []string{"party_ledger_name"},
+		},
+		{
+			toolName:       "create_receipt",
+			requiredFields: []string{"date", "reference", "narration", "party_ledger_name", "bank_account", "lines"},
 		},
 	}
 

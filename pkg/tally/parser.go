@@ -60,12 +60,19 @@ func parseObject(xmlData []byte, spec ParserSpec) (map[string]interface{}, error
 		xpath = "/*"
 	}
 	node, err := xmlquery.Query(doc, xpath)
-	if err != nil || node == nil {
+	if err != nil {
 		return nil, fmt.Errorf("root node not found at %q", xpath)
 	}
 	key := spec.ResultKey
 	if key == "" {
 		key = "data"
+	}
+	if node == nil {
+		return map[string]interface{}{
+			"success": false,
+			"error":   "not found",
+			key:       nil,
+		}, nil
 	}
 	return map[string]interface{}{
 		"success": true,

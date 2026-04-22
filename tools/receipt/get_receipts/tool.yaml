@@ -1,0 +1,11 @@
+name: get_receipts
+description: Fetch all Receipt vouchers for a specific party ledger (debtor/customer)
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    party_ledger_name:
+      type: string
+      description: Name of the party (debtor/customer) ledger (e.g., "Customer Name")
+  required:
+    - party_ledger_name

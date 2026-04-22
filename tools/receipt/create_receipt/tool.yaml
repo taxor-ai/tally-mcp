@@ -1,0 +1,60 @@
+name: create_receipt
+description: Create a receipt voucher (payment received from debtor/customer) with line items and bill allocations
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    date:
+      type: string
+      description: Receipt date in YYYYMMDD format
+    reference:
+      type: string
+      description: Receipt/transaction reference (e.g., cheque number, NEFT reference)
+    narration:
+      type: string
+      description: Receipt description/remarks
+    party_ledger_name:
+      type: string
+      description: Debtor/customer ledger name (for tracking against customer account)
+    bank_account:
+      type: string
+      description: Bank/cash account into which the receipt is deposited
+    lines:
+      type: array
+      description: "Array of line items. IMPORTANT: party/debtor entry must come FIRST (Tally uses the first entry as the Particulars label in registers). Sign convention: party/debtor is POSITIVE (credit), bank/cash is NEGATIVE (debit). All entries must balance to zero."
+      items:
+        type: object
+        description: A line item with ledger name and signed amount
+        properties:
+          ledger_name:
+            type: string
+            description: "Ledger account name. Party/debtor ledger (positive/credit) or bank/cash account (negative/debit)"
+            example: "TestStore"
+          amount:
+            type: number
+            description: "Signed amount: positive for party/debtor (credit), negative for bank/cash (debit). E.g. party=6800, bank=-6800"
+            example: 6800
+          bill_allocations:
+            type: array
+            description: Optional bill allocations for tracking receipt against sales invoices. Add to party/debtor entries only. Amount matches the party entry (positive).
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Sales invoice reference number (e.g., "INV2526000001")
+                type:
+                  type: string
+                  description: "Type of bill allocation: 'New Ref' (new reference), 'Agnst Ref' (against existing invoice), 'Advance' (advance receipt), 'On Account' (generic)"
+                  example: "New Ref"
+                amount:
+                  type: number
+                  description: Amount allocated (positive, matching party entry)
+        required: [ledger_name, amount]
+  required:
+    - date
+    - reference
+    - narration
+    - party_ledger_name
+    - bank_account
+    - lines
