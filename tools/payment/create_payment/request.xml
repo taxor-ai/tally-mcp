@@ -18,12 +18,12 @@
                     <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
                     <REFERENCE>{{ reference | e }}</REFERENCE>
                     <NARRATION>{{ narration | e }}</NARRATION>
-                    <PARTYLEDGER>{{ party_ledger_name | e }}</PARTYLEDGER>
 
                     {{ range .lines }}
                     <ALLLEDGERENTRIES.LIST>
                         <LEDGERNAME>{{ .ledger_name | e }}</LEDGERNAME>
                         <ISDEEMEDPOSITIVE>{{ if isNeg .amount }}Yes{{ else }}No{{ end }}</ISDEEMEDPOSITIVE>
+                        <ISPARTYLEDGER>{{ if .is_party }}Yes{{ else }}No{{ end }}</ISPARTYLEDGER>
                         <AMOUNT>{{ .amount }}</AMOUNT>
                         {{ if .bill_allocations }}
                         {{ range .bill_allocations }}

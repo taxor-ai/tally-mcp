@@ -11,6 +11,7 @@ func TestGetPayments(t *testing.T) {
 
 	// Fetch payments for a creditor (vendor)
 	// Use a creditor that exists in the test data
+	t.Log("Fetching payment vouchers for Cursor...")
 	result, err := handler.HandleToolCall("get_payments", map[string]interface{}{
 		"party_ledger_name": "Cursor",
 	})

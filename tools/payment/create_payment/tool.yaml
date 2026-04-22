@@ -16,21 +16,24 @@ input_schema:
     party_ledger_name:
       type: string
       description: Creditor/vendor ledger name (for tracking against vendor account)
+    bank_account:
+      type: string
+      description: Bank/cash account from which payment is made
     lines:
       type: array
-      description: Array of line items (ledger entries). Negative amounts are debits, positive amounts are credits. All entries must balance to zero.
+      description: Array of creditor/party line items. Include creditor entries being paid. Do NOT include the bank_account here.
       items:
         type: object
-        description: A line item with ledger name and signed amount
+        description: A creditor line item with ledger name and amount
         properties:
           ledger_name:
             type: string
-            description: "Ledger account name. Common examples: party ledger name (typically positive/credit), bank/cash accounts (negative/debit), expense accounts"
-            example: "Bank Account"
+            description: "Creditor/party ledger name"
+            example: "Cursor"
           amount:
             type: number
-            description: "Signed amount: negative for debit, positive for credit. Example: payment to vendor is 10000 (credit), bank account is -10000 (debit)"
-            example: -10000
+            description: "Amount being paid to the creditor (positive for credits)"
+            example: 10000
           bill_allocations:
             type: array
             description: Optional bill allocations for tracking payment against purchase invoices or bills
@@ -53,4 +56,5 @@ input_schema:
     - reference
     - narration
     - party_ledger_name
+    - bank_account
     - lines

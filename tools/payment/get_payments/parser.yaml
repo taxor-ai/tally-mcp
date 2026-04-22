@@ -12,6 +12,8 @@ fields:
     xpath: NARRATION
   voucher_type:
     xpath: VOUCHERTYPENAME
+  party_ledger_name:
+    xpath: PARTYLEDGER
   ledger_entries:
     items_xpath: ALLLEDGERENTRIES.LIST
     fields:
@@ -29,3 +31,13 @@ fields:
       tax_amount:
         xpath: TAXAMOUNT
         transform: number
+      bill_allocations:
+        items_xpath: BILLALLOCATIONS.LIST
+        fields:
+          name:
+            xpath: NAME
+          type:
+            xpath: BILLTYPE
+          amount:
+            xpath: AMOUNT
+            transform: number

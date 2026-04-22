@@ -23,15 +23,15 @@ func TestCreatePayment(t *testing.T) {
 	t.Logf("Cursor payments before: %d", len(beforeVouchers))
 
 	// Step 2: Create a payment voucher
-	// Payment structure: creditor ledger (credit, positive amount) + bank account (debit, negative amount)
 	result, err := handler.HandleToolCall("create_payment", map[string]interface{}{
 		"date":              "20260401",
 		"reference":         "TEST-PMT-001",
 		"narration":         "Test payment for April purchase",
 		"party_ledger_name": "Cursor",
+		"bank_account":      "ICICI Bank",
 		"lines": []map[string]interface{}{
-			{"ledger_name": "Cursor", "amount": 1000},             // Credit (payment to vendor)
-			{"ledger_name": "ICICI Bank", "amount": -1000}, // Debit (from bank)
+			{"ledger_name": "Cursor", "amount": -1000, "is_party": true},
+			{"ledger_name": "ICICI Bank", "amount": 1000, "is_party": false},
 		},
 	})
 	if err != nil {
@@ -79,19 +79,21 @@ func TestCreatePaymentWithBillAllocations(t *testing.T) {
 		"reference":         "CHQ-002",
 		"narration":         "Payment against Invoice INV-2026-001",
 		"party_ledger_name": "Cursor",
+		"bank_account":      "ICICI Bank",
 		"lines": []map[string]interface{}{
 			{
 				"ledger_name": "Cursor",
-				"amount":      5000,
+				"amount":      -5000,
+				"is_party":    true,
 				"bill_allocations": []map[string]interface{}{
 					{
 						"name":   "INV-2026-001",
 						"type":   "Agnst Ref",
-						"amount": 5000,
+						"amount": -5000,
 					},
 				},
 			},
-			{"ledger_name": "ICICI Bank", "amount": -5000},
+			{"ledger_name": "ICICI Bank", "amount": 5000, "is_party": false},
 		},
 	})
 	if err != nil {
@@ -115,19 +117,21 @@ func TestCreatePaymentWithAdvanceAllocation(t *testing.T) {
 		"reference":         "CHQ-003",
 		"narration":         "Advance payment for future purchases",
 		"party_ledger_name": "Cursor",
+		"bank_account":      "ICICI Bank",
 		"lines": []map[string]interface{}{
 			{
 				"ledger_name": "Cursor",
-				"amount":      10000,
+				"amount":      -10000,
+				"is_party":    true,
 				"bill_allocations": []map[string]interface{}{
 					{
 						"name":   "ADV-2026-001",
 						"type":   "Advance",
-						"amount": 10000,
+						"amount": -10000,
 					},
 				},
 			},
-			{"ledger_name": "ICICI Bank", "amount": -10000},
+			{"ledger_name": "ICICI Bank", "amount": 10000, "is_party": false},
 		},
 	})
 	if err != nil {

@@ -1,4 +1,4 @@
-.PHONY: help build build-linux build-windows docker-build test test-unit test-integration clean
+.PHONY: help build build-linux build-windows docker-build test test-unit test-integration test-payment clean
 
 help:
 	@echo "Available targets:"
@@ -9,6 +9,7 @@ help:
 	@echo "  test               - Run all tests (unit + integration)"
 	@echo "  test-unit          - Run unit tests only"
 	@echo "  test-integration   - Run integration tests (requires .env.test)"
+	@echo "  test-payment       - Run payment tool tests only"
 	@echo "  clean              - Clean build artifacts"
 
 build:
@@ -36,6 +37,14 @@ test-integration:
 		exit 1; \
 	fi
 	go test -v -tags=integration ./tests/integration/...
+
+test-payment:
+	@if [ ! -f .env.test ]; then \
+		echo "Error: .env.test file not found."; \
+		echo "Please copy .env.test.example to .env.test and update with your Tally connection details."; \
+		exit 1; \
+	fi
+	go test -v -tags=integration -run "TestCreatePayment|TestGetPayments" ./tests/integration -timeout 60s
 
 clean:
 	rm -f tally-mcp tally-mcp.exe
