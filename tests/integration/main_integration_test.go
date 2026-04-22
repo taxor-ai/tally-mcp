@@ -95,6 +95,8 @@ func TestRegistryHasAllExpectedTools(t *testing.T) {
 		"get_journal_vouchers",
 		"create_journal_voucher",
 		"create_sales_voucher",
+		"get_payments",
+		"create_payment",
 	}
 	for _, name := range expected {
 		if registry.Get(name) == nil {

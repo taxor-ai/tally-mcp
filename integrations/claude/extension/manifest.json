@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "Tally MCP",
   "version": "0.1.0",
-  "description": "Connect Claude to your Tally accounting data. Query companies, ledgers, debtors, and creditors from Tally.",
+  "description": "Connect Claude to your Tally accounting data locally. Query companies, ledgers, debtors, and creditors from Tally.",
   "author": {
     "name": "Taxor AI"
   },

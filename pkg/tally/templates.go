@@ -10,11 +10,40 @@ import (
 
 // RenderTemplate fills {{ key | e }} and {{key}} placeholders in a template string.
 // Also supports Go template syntax for complex data structures like lists.
+// Strategy: first replace scalar top-level params, then run Go template for loops/conditionals.
 func RenderTemplate(templateStr string, params map[string]interface{}) string {
-	// Try Go template rendering first (for loops, conditionals, etc.)
+	// Step 1: Replace scalar top-level params using simple string replacement.
+	// This handles {{ key | e }} and {{key}} patterns used in get/create tools.
+	result := templateStr
+	for key, value := range params {
+		var strValue string
+		if v, ok := value.(string); ok {
+			strValue = escapeXML(v)
+		} else if value != nil {
+			switch value.(type) {
+			case []interface{}, []map[string]interface{}:
+				continue // skip complex types — handled by Go template below
+			default:
+				strValue = fmt.Sprintf("%v", value)
+			}
+		}
+		result = strings.ReplaceAll(result, fmt.Sprintf("{{ %s | e }}", key), strValue)
+		result = strings.ReplaceAll(result, fmt.Sprintf("{{%s}}", key), strValue)
+	}
+
+	// Step 2: Run Go template on the result to handle range/if over complex types.
 	tmpl, err := template.New("xml").Funcs(template.FuncMap{
-		"e": escapeXML, // XML escape filter like Jinja2
-	}).Parse(templateStr)
+		"e": escapeXML,
+		"isNeg": func(v interface{}) bool {
+			switch n := v.(type) {
+			case int:     return n < 0
+			case int64:   return n < 0
+			case float32: return n < 0
+			case float64: return n < 0
+			}
+			return false
+		},
+	}).Parse(result)
 	if err == nil {
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, params); err == nil {
@@ -22,18 +51,6 @@ func RenderTemplate(templateStr string, params map[string]interface{}) string {
 		}
 	}
 
-	// Fallback to simple string replacement for compatibility
-	result := templateStr
-	for key, value := range params {
-		var strValue string
-		if v, ok := value.(string); ok {
-			strValue = v
-		} else if value != nil {
-			strValue = fmt.Sprintf("%v", value)
-		}
-		result = strings.ReplaceAll(result, fmt.Sprintf("{{ %s | e }}", key), strValue)
-		result = strings.ReplaceAll(result, fmt.Sprintf("{{%s}}", key), strValue)
-	}
 	return result
 }
 

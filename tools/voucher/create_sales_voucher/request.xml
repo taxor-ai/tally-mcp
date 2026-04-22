@@ -8,28 +8,28 @@
     <BODY>
         <DESC>
             <STATICVARIABLES>
-                <SVCURRENTCOMPANY>{{ e .company_name }}</SVCURRENTCOMPANY>
+                <SVCURRENTCOMPANY>{{ company_name | e }}</SVCURRENTCOMPANY>
             </STATICVARIABLES>
         </DESC>
         <DATA>
             <TALLYMESSAGE xmlns:UDF="TallyUDF">
                 <VOUCHER VCHTYPE="Sales" ACTION="Create" OBJVIEW="Accounting Voucher View">
-                    <DATE>{{ .date }}</DATE>
+                    <DATE>{{ date | e }}</DATE>
                     <VOUCHERTYPENAME>Sales</VOUCHERTYPENAME>
-                    <REFERENCE>{{ e .reference }}</REFERENCE>
-                    <NARRATION>{{ e .narration }}</NARRATION>
-                    <PARTYLEDGER>{{ e .party_ledger_name }}</PARTYLEDGER>
+                    <REFERENCE>{{ reference | e }}</REFERENCE>
+                    <NARRATION>{{ narration | e }}</NARRATION>
+                    <PARTYLEDGER>{{ party_ledger_name | e }}</PARTYLEDGER>
 
                     {{ range .lines }}
                     <ALLLEDGERENTRIES.LIST>
-                        <LEDGERNAME>{{ e .ledger_name }}</LEDGERNAME>
-                        <ISDEEMEDPOSITIVE>{{ if lt .amount 0.0 }}Yes{{ else }}No{{ end }}</ISDEEMEDPOSITIVE>
+                        <LEDGERNAME>{{ .ledger_name | e }}</LEDGERNAME>
+                        <ISDEEMEDPOSITIVE>{{ if isNeg .amount }}Yes{{ else }}No{{ end }}</ISDEEMEDPOSITIVE>
                         <AMOUNT>{{ .amount }}</AMOUNT>
                         {{ if .bill_allocations }}
                         {{ range .bill_allocations }}
                         <BILLALLOCATIONS.LIST>
-                            <NAME>{{ e .name }}</NAME>
-                            <BILLTYPE>{{ e .type }}</BILLTYPE>
+                            <NAME>{{ .name | e }}</NAME>
+                            <BILLTYPE>{{ .type | e }}</BILLTYPE>
                             <AMOUNT>{{ .amount }}</AMOUNT>
                         </BILLALLOCATIONS.LIST>
                         {{ end }}

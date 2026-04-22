@@ -1,0 +1,11 @@
+name: get_payments
+description: Fetch all Payment vouchers for a specific party ledger (creditor/vendor)
+implicit_params:
+  - company_name
+input_schema:
+  properties:
+    party_ledger_name:
+      type: string
+      description: Name of the party (creditor/vendor) ledger (e.g., "Vendor Name")
+  required:
+    - party_ledger_name

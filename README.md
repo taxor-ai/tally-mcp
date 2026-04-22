@@ -2,6 +2,8 @@
 
 Connect Claude to your Tally accounting software. Query companies, ledgers, debtors, creditors, and create new financial records directly from Claude conversations.
 
+**Extension runs locally. No proprietary cloud service. No additional hosting required.**
+
 ## What is Tally MCP?
 
 **Tally MCP** is a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server packaged as a Claude Desktop Extension. It allows Claude to:
@@ -11,6 +13,8 @@ Connect Claude to your Tally accounting software. Query companies, ledgers, debt
 - Look up debtor and creditor information
 - Create new ledgers and vouchers
 - All without leaving the Claude conversation interface
+
+**The extension runs locally.** No separate cloud service to manage. Direct integration between Claude Desktop and your Tally instance.
 
 Built with Go for cross-platform support (macOS, Linux, Windows).
 
@@ -40,10 +44,30 @@ Built with Go for cross-platform support (macOS, Linux, Windows).
 - Automated build script (`build/claude_extension.sh`)
 - Configuration via Claude Desktop UI
 
+✅ **Local Extension, No Proprietary Cloud**
+- Extension runs on your machine
+- Direct connection between Claude and Tally
+- No third-party cloud service to manage
+- Open source and auditable
+
 ✅ **Well-Tested**
 - Integration tests against real Tally instances
 - Comprehensive test suite included
 - All core features verified working
+
+## How It Works
+
+```
+Your Machine:
+├── Claude Desktop (installed)
+├── Tally MCP Extension (.mcpb file)
+└── Tally Server (local or network)
+
+Data Flow:
+Claude Desktop → Local MCP Extension → Tally
+
+Extension runs locally. No separate cloud infrastructure to manage.
+```
 
 ## Prerequisites
 
@@ -95,18 +119,18 @@ The extension creates Sales and Journal vouchers with automatic numbering. Confi
 
 ## Installation
 
-### For Users
+### For Users (5 Minutes, Simple Setup)
 
-1. **Download** the `.mcpb` file: `dist/tally-mcp-0.1.0.mcpb`
+1. **Download** the `.mcpb` file from [Releases](https://github.com/taxor-ai/tally-mcp/releases)
 
 2. **Install in Claude Desktop:**
    - Open Claude Desktop
-   - Settings → Customization → Connectors
-   - Click "Add Custom Connector"
+   - Go to Settings > Extensions > Advanced settings
+   - Click "Install extension"
    - Select the `.mcpb` file
 
 3. **Configure:**
-   - Enter your Tally Server host
+   - Enter your Tally Server host (localhost or internal IP)
    - Enter port (usually 9900)
    - Enter company name as it appears in Tally
    - Click Install
@@ -114,6 +138,8 @@ The extension creates Sales and Journal vouchers with automatic numbering. Confi
 4. **Restart** Claude Desktop completely
 
 5. **Verify** - Ask Claude: "What tools do I have access to?"
+
+**That's it.** Extension runs locally. No separate service to host or manage.
 
 ### For Developers
 
@@ -137,10 +163,12 @@ git clone https://github.com/taxor-ai/tally-mcp.git
 cd tally-mcp
 
 # Run the build script
-./build/claude_extension.sh
+bash build/claude_extension.sh
 ```
 
 This creates a ready-to-install `.mcpb` file at `dist/tally-mcp-0.1.0.mcpb`.
+
+Then install following the user instructions above.
 
 ### Build Script Details
 
@@ -269,11 +297,17 @@ tally-mcp/
 
 ## Architecture
 
+### Extension-Based Design
+
+- Claude Desktop starts the MCP server locally
+- Direct communication between Claude and your Tally instance
+- No separate cloud service or hosted backend required
+
 ### MCP Protocol
 
 Tally MCP implements the **Model Context Protocol**, a JSON-RPC 2.0 protocol over stdin/stdout:
 
-1. Claude Desktop starts the server process
+1. Claude Desktop starts the server process locally
 2. Server reads JSON-RPC requests from stdin
 3. Server processes and responds via stdout
 4. All logs go to stderr (preserving stdout for protocol)

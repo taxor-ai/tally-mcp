@@ -13,11 +13,12 @@
         </DESC>
         <DATA>
             <TALLYMESSAGE xmlns:UDF="TallyUDF">
-                <VOUCHER VCHTYPE="Journal" ACTION="Create" OBJVIEW="Accounting Voucher View">
+                <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
                     <DATE>{{ date | e }}</DATE>
-                    <VOUCHERTYPENAME>Journal</VOUCHERTYPENAME>
+                    <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
                     <REFERENCE>{{ reference | e }}</REFERENCE>
                     <NARRATION>{{ narration | e }}</NARRATION>
+                    <PARTYLEDGER>{{ party_ledger_name | e }}</PARTYLEDGER>
 
                     {{ range .lines }}
                     <ALLLEDGERENTRIES.LIST>
