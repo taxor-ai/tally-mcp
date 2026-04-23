@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.2",
   "name": "Tally",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Connect Claude to your Tally accounting data locally.",
   "author": {
     "name": "Taxor AI"
