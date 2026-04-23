@@ -20,6 +20,11 @@ type MCPResponse = mcp.JSONRPCResponse
 type ToolResult = mcp.ToolResult
 type ContentBlock = mcp.ContentBlock
 
+type registryResult struct {
+	registry *tally.Registry
+	err      error
+}
+
 func main() {
 	// Recover from panics and log to stderr
 	defer func() {
@@ -58,32 +63,49 @@ func main() {
 	client := tally.NewClient(cfg.Tally.Host, cfg.Tally.Port, 30)
 	client.SetCompany(cfg.Tally.Company)
 
-	// Load tool registry from tools directory
-	// Tools are located next to the binary: {binary_dir}/tools
+	// Determine tools directory
 	exePath, err := os.Executable()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error determining executable path: %v\n", err)
 		os.Exit(1)
 	}
-	exeDir := filepath.Dir(exePath)
-	toolsDir := filepath.Join(exeDir, "tools")
+	toolsDir := filepath.Join(filepath.Dir(exePath), "tools")
 
-	registry, err := tally.LoadRegistry(toolsDir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading tool registry: %v\n", err)
-		os.Exit(1)
-	}
-	log.Infof("Tool registry loaded from %s with %d tools", toolsDir, len(registry.All()))
-	handler := mcp.NewHandler(client, registry, log)
+	// Load tool registry in background so we can respond to initialize immediately
+	regCh := make(chan registryResult, 1)
+	go func() {
+		reg, err := tally.LoadRegistry(toolsDir)
+		regCh <- registryResult{reg, err}
+	}()
 
-	// Process requests from stdin
+	// Process requests from stdin — initialize responds instantly, tools load in background
 	reader := bufio.NewReader(os.Stdin)
-	processMCPRequests(reader, handler, log)
+	processMCPRequests(reader, client, regCh, log)
 }
 
-// processMCPRequests reads JSON-RPC requests from stdin and processes them
-func processMCPRequests(reader *bufio.Reader, handler *mcp.Handler, log *logger.Logger) {
+// processMCPRequests reads JSON-RPC requests from stdin and processes them.
+// The handler is resolved lazily from regCh on first tools/list or tools/call,
+// so initialize can respond immediately without waiting for registry load.
+func processMCPRequests(reader *bufio.Reader, client *tally.Client, regCh <-chan registryResult, log *logger.Logger) {
 	decoder := json.NewDecoder(reader)
+
+	var handler *mcp.Handler
+
+	// getHandler blocks until the registry is loaded, then caches the handler.
+	getHandler := func(reqID interface{}) *mcp.Handler {
+		if handler != nil {
+			return handler
+		}
+		result := <-regCh
+		if result.err != nil {
+			log.Warnf("Tool registry failed to load: %v", result.err)
+			writeError(reqID, "internal_error", fmt.Sprintf("Tool registry unavailable: %v", result.err))
+			return nil
+		}
+		log.Infof("Tool registry ready with %d tools", len(result.registry.All()))
+		handler = mcp.NewHandler(client, result.registry, log)
+		return handler
+	}
 
 	for {
 		var req MCPRequest
@@ -114,17 +136,24 @@ func processMCPRequests(reader *bufio.Reader, handler *mcp.Handler, log *logger.
 		// Handle different methods
 		switch req.Method {
 		case "initialize":
+			// Respond immediately — no registry needed
 			handleInitialize(req, log)
 
 		case "notifications/initialized":
 			log.Debugf("Client initialized")
 			// Notifications don't get responses
 
-		case "tools/call":
-			handleToolCall(req, handler, log)
-
 		case "tools/list":
-			handleToolsList(req, handler, log)
+			h := getHandler(req.ID)
+			if h != nil {
+				handleToolsList(req, h, log)
+			}
+
+		case "tools/call":
+			h := getHandler(req.ID)
+			if h != nil {
+				handleToolCall(req, h, log)
+			}
 
 		default:
 			if !isNotification {

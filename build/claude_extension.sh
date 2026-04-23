@@ -95,6 +95,7 @@ main() {
         exit 1
     fi
 
+    rm -rf "${SERVER_DIR}/tools"
     cp -r "${PROJECT_ROOT}/tools" "${SERVER_DIR}/tools"
     log_success "Tools directory copied"
 
