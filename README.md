@@ -214,6 +214,79 @@ chmod +x dist/tally-mcp-bundle/server/tally-mcp
 npx @anthropic-ai/mcpb pack dist/tally-mcp-bundle dist/tally-mcp-0.1.0.mcpb
 ```
 
+## Using as Standalone MCP Server
+
+If you want to use tally-mcp with other MCP-compatible clients, custom integrations, or run it independently from Claude Desktop:
+
+### 1. Download the Binary
+
+Download the appropriate pre-built binary for your OS from [Releases](https://github.com/taxor-ai/tally-mcp/releases):
+
+- **macOS ARM64 (Apple Silicon):** `tally-mcp-mac`
+- **macOS Intel:** `tally-mcp-mac-x86`
+- **Linux:** `tally-mcp-linux`
+- **Windows:** `tally-mcp.exe`
+
+### 2. Make it Executable (macOS/Linux only)
+
+```bash
+chmod +x tally-mcp-linux    # For Linux
+chmod +x tally-mcp-mac      # For macOS ARM64
+chmod +x tally-mcp-mac-x86  # For macOS Intel
+```
+
+Windows `.exe` files are already executable.
+
+### 3. Configure Environment Variables
+
+Set the required configuration before running:
+
+```bash
+export TALLY_HOST=localhost          # or your Tally server IP/hostname
+export TALLY_PORT=9900               # Tally server port (default: 9900)
+export TALLY_COMPANY="Your Company"  # Company name exactly as in Tally
+export TALLY_LOG_LEVEL=info          # Optional: debug, info, warn, error
+```
+
+**Windows (PowerShell):**
+```powershell
+$env:TALLY_HOST = "localhost"
+$env:TALLY_PORT = "9900"
+$env:TALLY_COMPANY = "Your Company"
+```
+
+### 4. Run the Server
+
+```bash
+./tally-mcp-linux      # Linux
+./tally-mcp-mac        # macOS ARM64
+./tally-mcp-mac-x86    # macOS Intel
+./tally-mcp.exe        # Windows
+```
+
+The MCP server will start and listen on stdin/stdout for JSON-RPC requests from your MCP client.
+
+### Using with Other MCP Clients
+
+You can now integrate tally-mcp with any MCP-compatible client. The server implements the [Model Context Protocol](https://modelcontextprotocol.io/) and communicates via JSON-RPC 2.0 over stdin/stdout.
+
+**Example integration in your MCP client config:**
+
+```json
+{
+  "tools": {
+    "tally": {
+      "command": "/path/to/tally-mcp-linux",
+      "env": {
+        "TALLY_HOST": "your-server.local",
+        "TALLY_PORT": "9900",
+        "TALLY_COMPANY": "Your Company"
+      }
+    }
+  }
+}
+```
+
 ## Configuration
 
 ### Environment Variables
