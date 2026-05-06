@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Tally  TallyConfig
 	Logger LoggerConfig
+	HTTP   HTTPConfig
 }
 
 type TallyConfig struct {
@@ -23,6 +24,11 @@ type TallyConfig struct {
 type LoggerConfig struct {
 	Level string // debug, info, warn, error
 	File  string // optional, empty means stdout only
+}
+
+type HTTPConfig struct {
+	Port string // empty = stdio mode; e.g. "9090"
+	Host string // bind address, default "0.0.0.0"
 }
 
 func Load() (*Config, error) {
@@ -46,6 +52,10 @@ func Load() (*Config, error) {
 		Logger: LoggerConfig{
 			Level: getEnvOrDefault("TALLY_LOG_LEVEL", "info"),
 			File:  os.Getenv("TALLY_LOG_FILE"),
+		},
+		HTTP: HTTPConfig{
+			Port: os.Getenv("MCP_HTTP_PORT"),
+			Host: getEnvOrDefault("MCP_HTTP_HOST", "0.0.0.0"),
 		},
 	}
 
