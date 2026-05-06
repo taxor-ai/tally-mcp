@@ -79,6 +79,19 @@ func TestHTTPConfigFromEnv(t *testing.T) {
 	}
 }
 
+func TestHTTPConfigInvalidPort(t *testing.T) {
+	os.Setenv("TALLY_HOST", "localhost")
+	os.Setenv("TALLY_PORT", "9900")
+	os.Setenv("TALLY_COMPANY", "DemoCompany")
+	os.Setenv("MCP_HTTP_PORT", "notaport")
+	defer os.Unsetenv("MCP_HTTP_PORT")
+
+	_, err := Load()
+	if err == nil {
+		t.Error("Expected error for non-numeric MCP_HTTP_PORT")
+	}
+}
+
 func TestHTTPConfigPortOnlyFromEnv(t *testing.T) {
 	os.Setenv("TALLY_HOST", "localhost")
 	os.Setenv("TALLY_PORT", "9900")

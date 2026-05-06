@@ -59,6 +59,13 @@ func Load() (*Config, error) {
 		},
 	}
 
+	// Validate MCP_HTTP_PORT is numeric if set
+	if cfg.HTTP.Port != "" {
+		if _, err := strconv.Atoi(cfg.HTTP.Port); err != nil {
+			return nil, fmt.Errorf("invalid MCP_HTTP_PORT %q: must be a number", cfg.HTTP.Port)
+		}
+	}
+
 	// Parse port
 	portStr := os.Getenv("TALLY_PORT")
 	if portStr == "" {

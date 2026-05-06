@@ -101,7 +101,7 @@ func runStdio(client *tally.Client, regCh <-chan registryResult, log *logger.Log
 		result := <-regCh
 		if result.err != nil {
 			log.Warnf("Tool registry failed to load: %v", result.err)
-			writeError(reqID, "internal_error", fmt.Sprintf("Tool registry unavailable: %v", result.err))
+			writeError(reqID, -32603, fmt.Sprintf("Tool registry unavailable: %v", result.err))
 			return nil
 		}
 		log.Infof("Tool registry ready with %d tools", len(result.registry.All()))
@@ -118,13 +118,13 @@ func runStdio(client *tally.Client, regCh <-chan registryResult, log *logger.Log
 		}
 		if err != nil {
 			log.Warnf("Error decoding request: %v", err)
-			writeError(nil, "parse_error", fmt.Sprintf("Invalid request: %v", err))
+			writeError(nil, -32700, fmt.Sprintf("Invalid request: %v", err))
 			continue
 		}
 
 		if req.JSONRPC != "2.0" {
 			log.Warnf("Invalid JSONRPC version: %s", req.JSONRPC)
-			writeError(req.ID, "invalid_request", "JSONRPC version must be 2.0")
+			writeError(req.ID, -32600, "JSONRPC version must be 2.0")
 			continue
 		}
 
@@ -148,7 +148,7 @@ func runStdio(client *tally.Client, regCh <-chan registryResult, log *logger.Log
 		default:
 			if !isNotification {
 				log.Warnf("Unknown method: %s", req.Method)
-				writeError(req.ID, "method_not_found", fmt.Sprintf("Method %s not found", req.Method))
+				writeError(req.ID, -32601, fmt.Sprintf("Method %s not found", req.Method))
 			}
 		}
 	}
@@ -189,7 +189,7 @@ func buildToolCallResponse(req MCPRequest, handler *mcp.Handler, log *logger.Log
 	toolName, ok := req.Params["name"].(string)
 	if !ok {
 		log.Warnf("Missing or invalid tool name in request")
-		return buildErrorResponse(req.ID, "invalid_params", "Tool name must be a string")
+		return buildErrorResponse(req.ID, -32602, "Tool name must be a string")
 	}
 
 	arguments, ok := req.Params["arguments"].(map[string]interface{})
@@ -202,13 +202,13 @@ func buildToolCallResponse(req MCPRequest, handler *mcp.Handler, log *logger.Log
 	result, err := handler.HandleToolCall(toolName, arguments)
 	if err != nil {
 		log.Warnf("Tool call failed: %v", err)
-		return buildErrorResponse(req.ID, "tool_error", fmt.Sprintf("Tool execution failed: %v", err))
+		return buildErrorResponse(req.ID, -32000, fmt.Sprintf("Tool execution failed: %v", err))
 	}
 
 	resultJSON, err := json.Marshal(result)
 	if err != nil {
 		log.Warnf("Error marshaling result: %v", err)
-		return buildErrorResponse(req.ID, "result_error", "Failed to marshal result")
+		return buildErrorResponse(req.ID, -32000, "Failed to marshal result")
 	}
 
 	return MCPResponse{
@@ -224,7 +224,7 @@ func buildToolCallResponse(req MCPRequest, handler *mcp.Handler, log *logger.Log
 }
 
 // buildErrorResponse builds a JSON-RPC error response.
-func buildErrorResponse(id interface{}, code, message string) MCPResponse {
+func buildErrorResponse(id interface{}, code int, message string) MCPResponse {
 	return MCPResponse{
 		JSONRPC: "2.0",
 		ID:      id,
@@ -246,7 +246,7 @@ func writeResponse(resp MCPResponse) {
 }
 
 // writeError writes a JSON-RPC error response to stdout.
-func writeError(id interface{}, code string, message string) {
+func writeError(id interface{}, code int, message string) {
 	writeResponse(buildErrorResponse(id, code, message))
 }
 
@@ -283,12 +283,12 @@ func serveMCP(w http.ResponseWriter, r *http.Request, handler *mcp.Handler, log 
 
 	var req MCPRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httpWriteError(w, nil, "parse_error", fmt.Sprintf("Invalid request: %v", err))
+		httpWriteError(w, nil, -32700, fmt.Sprintf("Invalid request: %v", err))
 		return
 	}
 
 	if req.JSONRPC != "2.0" {
-		httpWriteError(w, req.ID, "invalid_request", "JSONRPC version must be 2.0")
+		httpWriteError(w, req.ID, -32600, "JSONRPC version must be 2.0")
 		return
 	}
 
@@ -306,7 +306,7 @@ func serveMCP(w http.ResponseWriter, r *http.Request, handler *mcp.Handler, log 
 		httpWriteResponse(w, buildToolCallResponse(req, handler, log))
 	default:
 		log.Warnf("HTTP: unknown method: %s", req.Method)
-		httpWriteError(w, req.ID, "method_not_found", fmt.Sprintf("Method %s not found", req.Method))
+		httpWriteError(w, req.ID, -32601, fmt.Sprintf("Method %s not found", req.Method))
 	}
 }
 
@@ -325,6 +325,6 @@ func httpWriteResponse(w http.ResponseWriter, resp MCPResponse) {
 }
 
 // httpWriteError writes a JSON-RPC error response to an HTTP response.
-func httpWriteError(w http.ResponseWriter, id interface{}, code, message string) {
+func httpWriteError(w http.ResponseWriter, id interface{}, code int, message string) {
 	httpWriteResponse(w, buildErrorResponse(id, code, message))
 }
