@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -78,8 +79,12 @@ func main() {
 		regCh <- registryResult{reg, err}
 	}()
 
-	// Process requests from stdin — initialize responds instantly, tools load in background
-	runStdio(client, regCh, log)
+	// Dispatch to HTTP or stdio transport based on configuration
+	if cfg.HTTP.Port != "" {
+		runHTTP(cfg, client, regCh, log)
+	} else {
+		runStdio(client, regCh, log)
+	}
 }
 
 // runStdio reads JSON-RPC requests from stdin and processes them.
@@ -243,4 +248,80 @@ func writeResponse(resp MCPResponse) {
 // writeError writes a JSON-RPC error response to stdout.
 func writeError(id interface{}, code string, message string) {
 	writeResponse(buildErrorResponse(id, code, message))
+}
+
+// runHTTP starts the MCP HTTP server. Blocks until the registry is ready, then binds the port.
+func runHTTP(cfg *config.Config, client *tally.Client, regCh <-chan registryResult, log *logger.Logger) {
+	result := <-regCh
+	if result.err != nil {
+		log.Errorf("Tool registry failed to load: %v", result.err)
+		os.Exit(1)
+	}
+	log.Infof("Tool registry ready with %d tools", len(result.registry.All()))
+	handler := mcp.NewHandler(client, result.registry, log)
+
+	addr := fmt.Sprintf("%s:%s", cfg.HTTP.Host, cfg.HTTP.Port)
+	log.Infof("Starting Tally MCP server in HTTP mode on %s", addr)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/mcp", func(w http.ResponseWriter, r *http.Request) {
+		serveMCP(w, r, handler, log)
+	})
+
+	if err := http.ListenAndServe(addr, mux); err != nil {
+		fmt.Fprintf(os.Stderr, "HTTP server error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+// serveMCP handles a single HTTP request to the /mcp endpoint.
+func serveMCP(w http.ResponseWriter, r *http.Request, handler *mcp.Handler, log *logger.Logger) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req MCPRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpWriteError(w, nil, "parse_error", fmt.Sprintf("Invalid request: %v", err))
+		return
+	}
+
+	if req.JSONRPC != "2.0" {
+		httpWriteError(w, req.ID, "invalid_request", "JSONRPC version must be 2.0")
+		return
+	}
+
+	switch req.Method {
+	case "initialize":
+		log.Debugf("HTTP: handling initialize request")
+		httpWriteResponse(w, buildInitializeResponse(req))
+	case "notifications/initialized":
+		log.Debugf("HTTP: client initialized")
+		w.WriteHeader(http.StatusAccepted)
+	case "tools/list":
+		log.Debugf("HTTP: listing tools")
+		httpWriteResponse(w, buildToolsListResponse(req, handler))
+	case "tools/call":
+		httpWriteResponse(w, buildToolCallResponse(req, handler, log))
+	default:
+		log.Warnf("HTTP: unknown method: %s", req.Method)
+		httpWriteError(w, req.ID, "method_not_found", fmt.Sprintf("Method %s not found", req.Method))
+	}
+}
+
+// httpWriteResponse writes a JSON-RPC response as application/json to an HTTP response.
+func httpWriteResponse(w http.ResponseWriter, resp MCPResponse) {
+	data, err := json.Marshal(resp)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+}
+
+// httpWriteError writes a JSON-RPC error response to an HTTP response.
+func httpWriteError(w http.ResponseWriter, id interface{}, code, message string) {
+	httpWriteResponse(w, buildErrorResponse(id, code, message))
 }
