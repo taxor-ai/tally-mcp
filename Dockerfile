@@ -33,6 +33,9 @@ COPY --from=builder /app/tally-mcp .
 # Copy templates directory
 COPY --from=builder /app/pkg/tally ./pkg/tally
 
+# Copy tools directory (MCP tool registry)
+COPY --from=builder /app/tools ./tools
+
 # Set environment variables with defaults
 ENV TALLY_HOST=${TALLY_HOST:-localhost}
 ENV TALLY_PORT=${TALLY_PORT:-9900}
@@ -40,6 +43,4 @@ ENV TALLY_COMPANY=${TALLY_COMPANY:-}
 ENV TALLY_LOG_LEVEL=${TALLY_LOG_LEVEL:-info}
 ENV TALLY_LOG_FILE=${TALLY_LOG_FILE:-}
 
-# MCP servers communicate via stdin/stdout
-# The entrypoint is the binary which reads from stdin and writes to stdout
 ENTRYPOINT ["/app/tally-mcp"]
