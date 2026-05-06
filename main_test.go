@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/taxor-ai/tally-mcp/pkg/logger"
+	"github.com/taxor-ai/tally-mcp/pkg/mcp"
+	"github.com/taxor-ai/tally-mcp/pkg/tally"
 )
 
 func TestBuildInitializeResponse(t *testing.T) {
@@ -121,6 +124,10 @@ func TestServeMCPUnknownMethod(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected 200 (JSON-RPC errors use 200), got %d", resp.StatusCode)
+	}
+
 	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		t.Fatalf("Failed to decode response body: %v", err)
@@ -150,5 +157,77 @@ func TestServeMCPInvalidJSON(t *testing.T) {
 	}
 	if _, hasError := result["error"]; !hasError {
 		t.Errorf("Expected 'error' field for invalid JSON, got: %v", result)
+	}
+}
+
+func TestServeMCPInvalidJSONRPCVersion(t *testing.T) {
+	log, _ := logger.New("warn", "")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		serveMCP(w, r, nil, log)
+	}))
+	defer srv.Close()
+
+	body := `{"jsonrpc":"1.0","id":1,"method":"initialize","params":{}}`
+	resp, err := http.Post(srv.URL+"/mcp", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("Failed to decode response body: %v", err)
+	}
+	if _, hasError := result["error"]; !hasError {
+		t.Errorf("Expected 'error' field for invalid JSONRPC version, got: %v", result)
+	}
+}
+
+func TestServeMCPToolsList(t *testing.T) {
+	// Skip if tools directory is not available (CI without tools)
+	toolsDir := "tools"
+	if _, err := os.Stat(toolsDir); err != nil {
+		t.Skipf("tools directory not found at %q, skipping tools/list integration test", toolsDir)
+	}
+
+	registry, err := tally.LoadRegistry(toolsDir)
+	if err != nil {
+		t.Fatalf("LoadRegistry failed: %v", err)
+	}
+
+	log, _ := logger.New("warn", "")
+	client := tally.NewClient("localhost", 9000, 5)
+	handler := mcp.NewHandler(client, registry, log)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		serveMCP(w, r, handler, log)
+	}))
+	defer srv.Close()
+
+	body := `{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}`
+	resp, err := http.Post(srv.URL+"/mcp", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected 200, got %d", resp.StatusCode)
+	}
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("Failed to decode response body: %v", err)
+	}
+	innerResult, ok := result["result"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected 'result' field, got: %v", result)
+	}
+	tools, ok := innerResult["tools"].([]interface{})
+	if !ok {
+		t.Fatalf("Expected 'tools' array in result, got: %v", innerResult)
+	}
+	if len(tools) == 0 {
+		t.Error("Expected at least one tool in tools/list response")
 	}
 }

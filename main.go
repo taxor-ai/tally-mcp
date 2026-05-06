@@ -269,7 +269,7 @@ func runHTTP(cfg *config.Config, client *tally.Client, regCh <-chan registryResu
 	})
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
-		fmt.Fprintf(os.Stderr, "HTTP server error: %v\n", err)
+		log.Errorf("HTTP server error: %v", err)
 		os.Exit(1)
 	}
 }
@@ -318,7 +318,10 @@ func httpWriteResponse(w http.ResponseWriter, resp MCPResponse) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	if _, err := w.Write(data); err != nil {
+		// Client disconnected; log but don't attempt another write
+		fmt.Fprintf(os.Stderr, "Warning: failed to write HTTP response: %v\n", err)
+	}
 }
 
 // httpWriteError writes a JSON-RPC error response to an HTTP response.
