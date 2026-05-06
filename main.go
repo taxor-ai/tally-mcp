@@ -79,19 +79,16 @@ func main() {
 	}()
 
 	// Process requests from stdin — initialize responds instantly, tools load in background
-	reader := bufio.NewReader(os.Stdin)
-	processMCPRequests(reader, client, regCh, log)
+	runStdio(client, regCh, log)
 }
 
-// processMCPRequests reads JSON-RPC requests from stdin and processes them.
-// The handler is resolved lazily from regCh on first tools/list or tools/call,
+// runStdio reads JSON-RPC requests from stdin and processes them.
+// The handler is resolved lazily on first tools/list or tools/call,
 // so initialize can respond immediately without waiting for registry load.
-func processMCPRequests(reader *bufio.Reader, client *tally.Client, regCh <-chan registryResult, log *logger.Logger) {
-	decoder := json.NewDecoder(reader)
-
+func runStdio(client *tally.Client, regCh <-chan registryResult, log *logger.Logger) {
+	decoder := json.NewDecoder(bufio.NewReader(os.Stdin))
 	var handler *mcp.Handler
 
-	// getHandler blocks until the registry is loaded, then caches the handler.
 	getHandler := func(reqID interface{}) *mcp.Handler {
 		if handler != nil {
 			return handler
@@ -110,51 +107,39 @@ func processMCPRequests(reader *bufio.Reader, client *tally.Client, regCh <-chan
 	for {
 		var req MCPRequest
 		err := decoder.Decode(&req)
-
-		// Check for EOF
 		if err == io.EOF {
 			log.Infof("Client disconnected")
 			break
 		}
-
 		if err != nil {
 			log.Warnf("Error decoding request: %v", err)
 			writeError(nil, "parse_error", fmt.Sprintf("Invalid request: %v", err))
 			continue
 		}
 
-		// Validate request
 		if req.JSONRPC != "2.0" {
 			log.Warnf("Invalid JSONRPC version: %s", req.JSONRPC)
 			writeError(req.ID, "invalid_request", "JSONRPC version must be 2.0")
 			continue
 		}
 
-		// Check if this is a notification (no ID) or a request (has ID)
 		isNotification := req.ID == nil
 
-		// Handle different methods
 		switch req.Method {
 		case "initialize":
-			// Respond immediately — no registry needed
-			handleInitialize(req, log)
-
+			log.Debugf("Handling initialize request")
+			writeResponse(buildInitializeResponse(req))
 		case "notifications/initialized":
 			log.Debugf("Client initialized")
-			// Notifications don't get responses
-
 		case "tools/list":
-			h := getHandler(req.ID)
-			if h != nil {
-				handleToolsList(req, h, log)
+			if h := getHandler(req.ID); h != nil {
+				log.Debugf("Listing available tools")
+				writeResponse(buildToolsListResponse(req, h))
 			}
-
 		case "tools/call":
-			h := getHandler(req.ID)
-			if h != nil {
-				handleToolCall(req, h, log)
+			if h := getHandler(req.ID); h != nil {
+				writeResponse(buildToolCallResponse(req, h, log))
 			}
-
 		default:
 			if !isNotification {
 				log.Warnf("Unknown method: %s", req.Method)
@@ -164,66 +149,13 @@ func processMCPRequests(reader *bufio.Reader, client *tally.Client, regCh <-chan
 	}
 }
 
-// handleToolCall processes tool call requests
-func handleToolCall(req MCPRequest, handler *mcp.Handler, log *logger.Logger) {
-	toolName, ok := req.Params["name"].(string)
-	if !ok {
-		log.Warnf("Missing or invalid tool name in request")
-		writeError(req.ID, "invalid_params", "Tool name must be a string")
-		return
-	}
-
-	arguments, ok := req.Params["arguments"].(map[string]interface{})
-	if !ok {
-		arguments = make(map[string]interface{})
-	}
-
-	log.Debugf("Calling tool: %s with arguments: %v", toolName, arguments)
-
-	// Call handler
-	result, err := handler.HandleToolCall(toolName, arguments)
-	if err != nil {
-		log.Warnf("Tool call failed: %v", err)
-		writeError(req.ID, "tool_error", fmt.Sprintf("Tool execution failed: %v", err))
-		return
-	}
-
-	// Convert result to JSON string
-	resultJSON, err := json.Marshal(result)
-	if err != nil {
-		log.Warnf("Error marshaling result: %v", err)
-		writeError(req.ID, "result_error", "Failed to marshal result")
-		return
-	}
-
-	// Format response
-	contentBlock := ContentBlock{
-		Type: "text",
-		Text: string(resultJSON),
-	}
-
-	toolResult := ToolResult{
-		Content: []ContentBlock{contentBlock},
-	}
-
-	response := MCPResponse{
-		JSONRPC: "2.0",
-		ID:      req.ID,
-		Result:  toolResult,
-	}
-
-	writeResponse(response)
-}
-
-// handleInitialize handles the MCP initialize request
-func handleInitialize(req MCPRequest, log *logger.Logger) {
-	log.Debugf("Handling initialize request")
-
-	response := MCPResponse{
+// buildInitializeResponse builds the MCP initialize response.
+func buildInitializeResponse(req MCPRequest) MCPResponse {
+	return MCPResponse{
 		JSONRPC: "2.0",
 		ID:      req.ID,
 		Result: map[string]interface{}{
-			"protocolVersion": "2025-11-25",
+			"protocolVersion": "2024-11-05",
 			"capabilities": map[string]interface{}{
 				"tools": map[string]interface{}{},
 			},
@@ -233,25 +165,69 @@ func handleInitialize(req MCPRequest, log *logger.Logger) {
 			},
 		},
 	}
-
-	writeResponse(response)
 }
 
-// handleToolsList returns the list of available tools
-func handleToolsList(req MCPRequest, handler *mcp.Handler, log *logger.Logger) {
-	log.Debugf("Listing available tools")
-
+// buildToolsListResponse builds the tools/list response.
+func buildToolsListResponse(req MCPRequest, handler *mcp.Handler) MCPResponse {
 	tools := handler.ListTools()
-
-	response := MCPResponse{
+	return MCPResponse{
 		JSONRPC: "2.0",
 		ID:      req.ID,
 		Result: map[string]interface{}{
 			"tools": tools,
 		},
 	}
+}
 
-	writeResponse(response)
+// buildToolCallResponse dispatches a tool call and returns the response.
+func buildToolCallResponse(req MCPRequest, handler *mcp.Handler, log *logger.Logger) MCPResponse {
+	toolName, ok := req.Params["name"].(string)
+	if !ok {
+		log.Warnf("Missing or invalid tool name in request")
+		return buildErrorResponse(req.ID, "invalid_params", "Tool name must be a string")
+	}
+
+	arguments, ok := req.Params["arguments"].(map[string]interface{})
+	if !ok {
+		arguments = make(map[string]interface{})
+	}
+
+	log.Debugf("Calling tool: %s with arguments: %v", toolName, arguments)
+
+	result, err := handler.HandleToolCall(toolName, arguments)
+	if err != nil {
+		log.Warnf("Tool call failed: %v", err)
+		return buildErrorResponse(req.ID, "tool_error", fmt.Sprintf("Tool execution failed: %v", err))
+	}
+
+	resultJSON, err := json.Marshal(result)
+	if err != nil {
+		log.Warnf("Error marshaling result: %v", err)
+		return buildErrorResponse(req.ID, "result_error", "Failed to marshal result")
+	}
+
+	return MCPResponse{
+		JSONRPC: "2.0",
+		ID:      req.ID,
+		Result: ToolResult{
+			Content: []ContentBlock{{
+				Type: "text",
+				Text: string(resultJSON),
+			}},
+		},
+	}
+}
+
+// buildErrorResponse builds a JSON-RPC error response.
+func buildErrorResponse(id interface{}, code, message string) MCPResponse {
+	return MCPResponse{
+		JSONRPC: "2.0",
+		ID:      id,
+		Error: map[string]interface{}{
+			"code":    code,
+			"message": message,
+		},
+	}
 }
 
 // writeResponse writes a JSON-RPC response to stdout
@@ -264,15 +240,7 @@ func writeResponse(resp MCPResponse) {
 	fmt.Println(string(data))
 }
 
-// writeError writes a JSON-RPC error response to stdout
+// writeError writes a JSON-RPC error response to stdout.
 func writeError(id interface{}, code string, message string) {
-	resp := MCPResponse{
-		JSONRPC: "2.0",
-		ID:      id,
-		Error: map[string]interface{}{
-			"code":    code,
-			"message": message,
-		},
-	}
-	writeResponse(resp)
+	writeResponse(buildErrorResponse(id, code, message))
 }
