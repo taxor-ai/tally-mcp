@@ -15,7 +15,7 @@ input_schema:
       description: Description of the transaction
     lines:
       type: array
-      description: Array of ledger entries. Negative amounts are debits, positive amounts are credits. Must balance to zero.
+      description: "Array of ledger entries. Debits negative, credits positive. Must balance to zero. SCHEMA: Each item: {ledger_name (string, required, e.g. 'Travel Expense'), amount (number, required, signed: -1000 debit, 1000 credit), bill_allocations (array optional, items: {name (string), type (string), amount (number)})}. Example: [{ledger_name: 'Travel Expense', amount: -1000}, {ledger_name: 'Bank Account', amount: 1000}]"
       items:
         type: object
         description: A ledger entry with account name and signed amount

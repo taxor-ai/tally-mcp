@@ -1,0 +1,48 @@
+# Multi-stage build for Tally MCP with mcpo proxy
+# Stage 1: Build tally-mcp binary
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache git
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o tally-mcp .
+
+# Stage 2: Runtime with mcpo + tally-mcp binary
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install mcpo (MCP to OpenAPI proxy)
+RUN pip install --no-cache-dir mcpo
+
+# Copy tally-mcp binary from builder
+COPY --from=builder /app/tally-mcp .
+
+# Copy required directories
+COPY --from=builder /app/pkg/tally ./pkg/tally
+COPY --from=builder /app/tools ./tools
+
+# Set environment variables with defaults
+ENV TALLY_HOST=${TALLY_HOST:-localhost}
+ENV TALLY_PORT=${TALLY_PORT:-9900}
+ENV TALLY_COMPANY=${TALLY_COMPANY:-}
+ENV TALLY_LOG_LEVEL=${TALLY_LOG_LEVEL:-info}
+ENV TALLY_LOG_FILE=${TALLY_LOG_FILE:-}
+
+# Expose mcpo port (default 8001)
+EXPOSE 8001
+
+# Start mcpo which wraps tally-mcp stdio with HTTP
+CMD ["mcpo", "--port", "8001", "--", "/app/tally-mcp"]

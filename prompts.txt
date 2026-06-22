@@ -1,0 +1,8 @@
+Can you create a sales voucher for test store for Rs 20000 in Tally on May 1st 2026. 
+There is a pending sales voucher in April 2026 for this store. Create a receipt for this with 1st May 2026 as well
+
+Before creating any entry, ensure to get the correct ledgers from tally, get past vouchers to understand the pattern and then create the vouchers.
+
+
+Create a journal voucher based on the attached file. 
+Before creating any entry, ensure to get the correct ledgers from tally, get past vouchers to understand the pattern and then create the vouchers.

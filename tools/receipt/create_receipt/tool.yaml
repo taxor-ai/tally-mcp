@@ -21,7 +21,7 @@ input_schema:
       description: Bank/cash account into which the receipt is deposited
     lines:
       type: array
-      description: "Array of line items. IMPORTANT: party/debtor entry must come FIRST (Tally uses the first entry as the Particulars label in registers). Sign convention: party/debtor is POSITIVE (credit), bank/cash is NEGATIVE (debit). All entries must balance to zero."
+      description: "Array of line items. IMPORTANT: party/debtor entry must come FIRST. Sign convention: party/debtor POSITIVE (credit), bank/cash NEGATIVE (debit). Balance to zero. SCHEMA: Each item: {ledger_name (string, required), amount (number, required, signed), bill_allocations (array optional, items: {name (string), type (string), amount (number)})}. Example: [{ledger_name: 'TestStore', amount: 6800, bill_allocations: [{name: 'INV001', type: 'Agnst Ref', amount: 6800}]}, {ledger_name: 'Bank Account', amount: -6800}]"
       items:
         type: object
         description: A line item with ledger name and signed amount

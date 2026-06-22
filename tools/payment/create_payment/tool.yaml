@@ -21,7 +21,7 @@ input_schema:
       description: Bank/cash account from which payment is made
     lines:
       type: array
-      description: Array of creditor/party line items. Include creditor entries being paid. Do NOT include the bank_account here.
+      description: "Array of creditor/party line items. Do NOT include bank_account. SCHEMA: Each item: {ledger_name (string, required, e.g. 'Cursor'), amount (number, required, positive), bill_allocations (array optional, items: {name (string, e.g. 'INV-001'), type (string, e.g. 'Agnst Ref'), amount (number)})}. Example: [{ledger_name: 'Cursor', amount: 10000, bill_allocations: [{name: 'INV-001', type: 'Agnst Ref', amount: 10000}]}]"
       items:
         type: object
         description: A creditor line item with ledger name and amount

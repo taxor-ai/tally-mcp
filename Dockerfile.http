@@ -1,0 +1,42 @@
+# Build Tally MCP in HTTP mode
+# Branch: feat/http-transport
+# Exposes /mcp endpoint with JSON-RPC interface
+
+FROM golang:1.25-alpine as builder
+
+WORKDIR /build
+
+# Clone and checkout feat/http-transport branch
+RUN apk add --no-cache git ca-certificates
+RUN git clone https://github.com/taxor-ai/tally-mcp.git . && \
+    git checkout feat/http-transport
+
+# Download dependencies
+RUN go mod download
+
+# Build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -installsuffix cgo -o tally-mcp .
+
+# Copy tools
+RUN mkdir -p /app/tools && cp -r ./tools /app/
+
+# Runtime stage
+FROM alpine:latest
+
+WORKDIR /app
+
+# Install CA certificates for HTTPS
+RUN apk add --no-cache ca-certificates
+
+# Copy binary and tools from builder
+COPY --from=builder /build/tally-mcp /app/tally-mcp
+COPY --from=builder /app/tools /app/tools
+
+# Configuration is passed via docker-compose environment variables
+# Required: TALLY_HOST, TALLY_PORT, TALLY_COMPANY
+# HTTP: MCP_HTTP_PORT, MCP_HTTP_HOST
+# Logging: TALLY_LOG_LEVEL
+
+EXPOSE 9090
+
+CMD ["/app/tally-mcp"]

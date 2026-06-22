@@ -18,7 +18,7 @@ input_schema:
       description: Customer/debtor ledger name (for tracking against customer account)
     lines:
       type: array
-      description: Array of line items (ledger entries). Negative amounts are debits, positive amounts are credits. All entries must balance to zero.
+      description: "Array of line items (ledger entries). Negative amounts are debits, positive amounts are credits. All entries must balance to zero. SCHEMA: Each line item is an object with properties: ledger_name (string, required, e.g. 'Delivery Management Software Service-GST'), amount (number, required, signed: -5310 for debit, 4500 for credit), bill_allocations (array optional, items: {name: string (invoice ref), type: string (allocation type), amount: number}). Example: [{ledger_name: 'TestStore', amount: -5310}, {ledger_name: 'Revenue Account', amount: 4500}, {ledger_name: 'Output SGST', amount: 810}]"
       items:
         type: object
         description: A line item with ledger name and signed amount
